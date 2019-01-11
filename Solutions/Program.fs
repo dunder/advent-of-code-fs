@@ -1,6 +1,6 @@
 ﻿module Aoc.Program
 
-open AoC
+open AoC.E2015
 
 [<EntryPoint>]
 let main args =

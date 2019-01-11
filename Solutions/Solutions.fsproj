@@ -6,12 +6,17 @@
   </PropertyGroup>
 
   <ItemGroup>
-    <Content Include="Input\Day01.txt">
-      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
-    </Content>
     <Compile Include="IO.fs" />
     <Compile Include="Sequences.fs" />
-    <Compile Include="Day01.fs" />
+    <Compile Include="DayTemplate.fs" />
+    <Content Include="2015\Input\Day01.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2015\Input\Day02.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Include="2015\Day01.fs" />
+    <Compile Include="2015\Day02.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -1,10 +1,12 @@
-﻿module AoC.Day01
+﻿module AoC.E2015.Day01
 
 open Aoc
 open Sequences
 open IO
 
-let input = readText @".\Input\Day01.txt"
+// --- Day 1: Not Quite Lisp ---
+
+let input = readText @".\2015\Input\Day01.txt"
 
 let elevetorStopsAt input = (input |> count '(') - (input |> count ')')
 
