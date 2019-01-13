@@ -6,26 +6,20 @@ open IO
 
 // --- Day 1: Not Quite Lisp ---
 
-let input = readText @".\2015\Input\Day01.txt"
+let input = readInputText "2015" "Day01"
 
 let elevetorStopsAt input = (input |> count '(') - (input |> count ')')
 
-let rec positionWhenFloorReached position floor movements targetFloor =
-    match movements with 
-    | [] -> position
-    | head::tail ->
-        let newFloor = match head with
-        | ')' -> floor - 1
+let positionForFirstTargetFloor input targetFloor =
+    input
+    |> Seq.scan (fun floor c -> 
+        match c with
         | '(' -> floor + 1
-        | x -> failwithf "Unexpected token '%c' in input" x
-
-        if newFloor = targetFloor then
-            position
-        else 
-            positionWhenFloorReached (position+1) newFloor tail targetFloor
+        | _ -> floor - 1) 0
+    |> Seq.findIndex (fun i -> i = targetFloor)
 
 let positionOfFirstBasement input = 
-    positionWhenFloorReached 1 0 (Seq.toList input) -1
+    positionForFirstTargetFloor input -1
 
 let firstStar () =
     let floor = elevetorStopsAt input

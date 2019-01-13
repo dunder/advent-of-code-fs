@@ -1,16 +1,9 @@
 ﻿module Aoc.IO
 
-open Microsoft.FSharp.Quotations
+open System
 open System.IO
 
-let rec functionName = function
-| Patterns.Call(None, methodInfo, _) -> methodInfo.Name
-| Patterns.Lambda(_, expression) -> functionName expression
-| _ -> failwith "Unexpected input"
+let path event day = sprintf @".\%s\Input\%s.txt" event day
 
-let readLines filePath = File.ReadLines(filePath)
-let readText filePath = File.ReadAllText(filePath)
-
-
-
-
+let readInputLines event day = File.ReadLines(path event day)
+let readInputText event day = File.ReadAllText(path event day)

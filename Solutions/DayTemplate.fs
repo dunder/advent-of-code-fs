@@ -5,7 +5,7 @@ open IO
 
 // Template for new problems
 
-let input = readLines @".\Input\DayXX.txt"
+let input = readInputLines "20XX" "DayXX"
 
 
 let firstStar () =
