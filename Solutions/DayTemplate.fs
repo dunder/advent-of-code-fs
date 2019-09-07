@@ -9,10 +9,10 @@ let input = readInputLines "20XX" "DayXX"
 
 
 let firstStar () =
-    printfn "First star: %A" 0
+    0
 
 let secondStar () = 
-    printfn "Second star: %A" 0
+    0
 
 
 module Tests =

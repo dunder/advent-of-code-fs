@@ -22,12 +22,10 @@ let positionOfFirstBasement input =
     positionForFirstTargetFloor input -1
 
 let firstStar () =
-    let floor = elevetorStopsAt input
-    printfn "First star: %A" floor
+    elevetorStopsAt input
 
 let secondStar () = 
-    let position = positionOfFirstBasement input
-    printfn "Second star: %A" position
+    positionOfFirstBasement input
 
 
 module Tests =

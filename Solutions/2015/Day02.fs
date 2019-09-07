@@ -35,10 +35,10 @@ let totalRibbonDemand (input : seq<String>) =
     |> List.fold (fun acc present -> acc + present.Ribbon + present.Bow) 0
     
 let firstStar () =
-    printfn "First star: %d" (totalPaperDemand input)
+    totalPaperDemand input
 
 let secondStar () = 
-    printfn "Second star: %A" (totalRibbonDemand input)
+    totalRibbonDemand input
 
 
 module Tests =
