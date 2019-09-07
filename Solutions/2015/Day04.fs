@@ -5,12 +5,9 @@ open Cryptography
 
 let input = "bgvyzdsv"
 
-let add (input : string, x : int) = 
-    md5 (input + x.ToString())
-
 let findFirstMatchingHash (input : string, target : string) =
-    let values = Seq.unfold (fun state -> Some(state, state + 1)) 0
-    Seq.find (fun x -> (add (input, x)).StartsWith(target)) values
+    let values = Seq.unfold (fun state -> Some(state, state + 1)) 1
+    Seq.find (fun x -> (md5 (input + x.ToString())).StartsWith(target)) values
     
 
 let firstStar () =
