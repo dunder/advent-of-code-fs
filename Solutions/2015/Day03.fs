@@ -1,6 +1,6 @@
 ﻿module AoC.E2015.Day03
 
-open Aoc
+open AoC
 open IO
 
 // --- Day 3: Perfectly Spherical Houses in a Vacuum ---

@@ -1,6 +1,6 @@
 ﻿module AoC.E2015.Day01
 
-open Aoc
+open AoC
 open Sequences
 open IO
 

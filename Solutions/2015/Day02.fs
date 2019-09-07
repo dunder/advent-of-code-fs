@@ -1,6 +1,6 @@
 ﻿module AoC.E2015.Day02
 
-open Aoc
+open AoC
 open IO
 open System
 

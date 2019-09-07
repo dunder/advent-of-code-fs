@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Cryptography.fs" />
     <Compile Include="IO.fs" />
     <Compile Include="Sequences.fs" />
     <Compile Include="DayTemplate.fs" />
@@ -21,6 +22,7 @@
     <Compile Include="2015\Day01.fs" />
     <Compile Include="2015\Day02.fs" />
     <Compile Include="2015\Day03.fs" />
+    <Compile Include="2015\Day04.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

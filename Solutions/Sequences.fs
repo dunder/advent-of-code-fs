@@ -1,4 +1,4 @@
-﻿module Aoc.Sequences
+﻿module AoC.Sequences
 
 let count x xs =
     xs

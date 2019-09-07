@@ -1,6 +1,6 @@
 ﻿module AoC.DayXX
 
-open Aoc
+open AoC
 open IO
 
 // Template for new problems
@@ -22,9 +22,9 @@ module Tests =
     [<Fact>]
     let ``first star`` () =
 
-        Assert.Equal(0, 0)
+        Assert.Equal(0, firstStar())
 
     [<Fact>]
     let ``second star`` () =
 
-        Assert.Equal(0, 0)
+        Assert.Equal(0, firstStar())
