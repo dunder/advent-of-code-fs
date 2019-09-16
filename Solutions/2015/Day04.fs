@@ -6,6 +6,8 @@ open Cryptography
 let input = "bgvyzdsv"
 
 let findFirstMatchingHash (input : string, target : string) =
+    // unfold takes a function that should return an option tuple of the next value and the next state
+    // this implementation generates the next int starting with 1 and keeps on while iterated over
     let values = Seq.unfold (fun state -> Some(state, state + 1)) 1
     Seq.find (fun x -> (md5 (input + x.ToString())).StartsWith(target)) values
     
