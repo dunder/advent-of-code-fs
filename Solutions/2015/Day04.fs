@@ -3,6 +3,8 @@
 open AoC
 open Cryptography
 
+// --- Day 4: The Ideal Stocking Stuffer ---
+
 let input = "bgvyzdsv"
 
 let findFirstMatchingHash (input : string, target : string) =

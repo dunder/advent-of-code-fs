@@ -11,9 +11,9 @@ let printByType (text : string, result : obj) =
 
 [<EntryPoint>]
 let main _args =
-    printByType ("First star: ", Day02.firstStar())
+    printByType ("First star: ", Day05.firstStar())
     printfn "\n"
-    printByType ("Second star:", Day02.secondStar())
+    printByType ("Second star:", Day05.secondStar())
     printfn "\n"
     0
 
