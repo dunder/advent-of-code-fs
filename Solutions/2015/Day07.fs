@@ -1,11 +1,11 @@
-﻿module AoC.E20XX.DayXX
+﻿module AoC.E2015.Day07
 
 open AoC
 open IO
 
 // Template for new problems
 
-let input = readInputLines "20XX" "DayXX"
+let input = readInputLines "2015" "Day07"
 
 
 let firstStar () =
@@ -28,3 +28,5 @@ module Tests =
     let ``second star`` () =
 
         Assert.Equal(0, secondStar())
+
+
