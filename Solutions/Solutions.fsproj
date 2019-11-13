@@ -22,11 +22,15 @@
     <Content Include="2015\Input\Day05.txt">
       <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
     </Content>
+    <Content Include="2015\Input\Day06.txt">
+      <CopyToOutputDirectory>PreserveNewest</CopyToOutputDirectory>
+    </Content>
     <Compile Include="2015\Day01.fs" />
     <Compile Include="2015\Day02.fs" />
     <Compile Include="2015\Day03.fs" />
     <Compile Include="2015\Day04.fs" />
     <Compile Include="2015\Day05.fs" />
+    <Compile Include="2015\Day06.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

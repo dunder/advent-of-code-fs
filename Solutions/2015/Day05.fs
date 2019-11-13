@@ -2,7 +2,6 @@
 
 open AoC
 open IO
-open System
 open System.Text.RegularExpressions
 
 // --- Day 5: Doesn't He Have Intern-Elves For This? ---
