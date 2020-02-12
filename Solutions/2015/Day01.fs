@@ -36,7 +36,7 @@ module Tests =
     [<InlineData("(())", 0)>]
     [<InlineData("(((", 3)>]
     [<InlineData("))(((((", 3)>]
-    let ``when floorVisitor is provided with input resulting floor meets expectation`` input expectedFloor =
+    let ``when elevetorStopsAt is provided with input resulting floor meets expectation`` input expectedFloor =
         let floor = elevetorStopsAt input
 
         Assert.Equal(expectedFloor, floor)
@@ -60,3 +60,6 @@ module Tests =
         let position = positionOfFirstBasement input
 
         Assert.Equal(1795, position)
+        
+
+
