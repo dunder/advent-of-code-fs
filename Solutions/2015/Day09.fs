@@ -1,8 +1,10 @@
 ﻿module AoC.E2015.Day09
 
+open System.Collections.Generic
 open System.Text.RegularExpressions;
 
 open AoC
+open Combinatorics
 open IO
 
 // --- Day 9: All in a Single Night ---
@@ -35,58 +37,27 @@ let createDistanceMap distancePairs =
     |> Seq.groupBy (fun leg -> leg.Start)
     |> Seq.map (fun (start, group) -> (start, group |> Seq.map (fun leg -> (leg.Stop, leg.Distance)) |> dict))
     |> dict
-  
-open System.Collections.Generic
 
 let nextNotInRoute (current:string) (route:string list) (distanceMap:IDictionary<string, IDictionary<string,int>>) =
     distanceMap.[current].Keys 
     |> Seq.filter (fun next -> route |> List.exists (fun next' -> next' = next) |> not) 
     |> List.ofSeq
 
-let allRoutes (distanceMap:IDictionary<string, IDictionary<string,int>>) =
-    let starts = distanceMap.Keys |> List.ofSeq
-    let routes = []
+let shortestRoute input =
+    let distances = createDistanceMap <| allDistancePairs input
+    let distance route =
+        route
+        |> List.pairwise 
+        |> List.map (fun (start,stop) -> distances.[start].[stop]) 
+        |> List.sum
+    
+    let cities = distances.Keys |> List.ofSeq
+    let routes = permutations cities
 
-    let rec _route (current:string) (route:string list) (distanceMap:IDictionary<string, IDictionary<string,int>>) = 
-        
-        let next = nextNotInRoute current route distanceMap
-
-        match next with
-        | head::tail -> 
-            current::route
-        | [] -> route
-
-
-        //seq {
-        //    // create one route per nextNotInRoute
-        //    match nextNotInRoute with
-        //    | head::tail -> 
-        //        let part1 = _route head (current::route) distanceMap
-        //        //let part2 = tail |> Seq.fold (fun routes newCurrent -> (_route newCurrent (head::route) distanceMap)::routes) route
-        //        yield! part1
-        //        //yield! part2
-        //    | [] -> yield route
-        //}
-
-    let m = starts |> Seq.fold (fun state item -> (_route item [] distanceMap)::state) routes 
-
-    0
-
-let rec traverse (starts:string list) (routes:string list list) (distanceMap:IDictionary<string, IDictionary<string,int>>) =
-    match starts with 
-    | x::xs -> 
-        
-        traverse xs ([x] @ ) distanceMap
-    | [] -> routes
-
-let l1 = [1;2;3]
-let l2 = [2;3;4]
+    routes |> Seq.map distance |> Seq.min
 
 let firstStar () =
-    let m = createDistanceMap <| allDistancePairs input
-    let starts = m.Keys |> List.ofSeq
-    let n = traverse starts [] m
-    0
+    shortestRoute input
 
 let secondStar () = 
     0
@@ -99,7 +70,7 @@ module Tests =
     [<Fact>]
     let ``first star`` () =
 
-        Assert.Equal(-1, firstStar())
+        Assert.Equal(117, firstStar())
 
     [<Fact>]
     let ``second star`` () =
