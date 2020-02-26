@@ -43,24 +43,24 @@ let nextNotInRoute (current:string) (route:string list) (distanceMap:IDictionary
     |> Seq.filter (fun next -> route |> List.exists (fun next' -> next' = next) |> not) 
     |> List.ofSeq
 
-let shortestRoute input =
-    let distances = createDistanceMap <| allDistancePairs input
-    let distance route =
-        route
-        |> List.pairwise 
-        |> List.map (fun (start,stop) -> distances.[start].[stop]) 
-        |> List.sum
-    
-    let cities = distances.Keys |> List.ofSeq
-    let routes = permutations cities
-
-    routes |> Seq.map distance |> Seq.min
+let allRouteDistances input =
+       let distances = createDistanceMap <| allDistancePairs input
+       let distance route =
+           route
+           |> List.pairwise 
+           |> List.map (fun (start,stop) -> distances.[start].[stop]) 
+           |> List.sum
+       
+       let cities = distances.Keys |> List.ofSeq
+       let routes = permutations cities
+       
+       routes |> Seq.map distance
 
 let firstStar () =
-    shortestRoute input
+    Seq.min <| allRouteDistances input 
 
 let secondStar () = 
-    0
+    Seq.max <| allRouteDistances input 
 
 
 module Tests =
@@ -75,6 +75,6 @@ module Tests =
     [<Fact>]
     let ``second star`` () =
 
-        Assert.Equal(-1, secondStar())
+        Assert.Equal(909, secondStar())
 
 
