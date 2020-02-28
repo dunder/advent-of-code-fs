@@ -21,7 +21,9 @@ let badCombinations s =
     s |> Seq.pairwise |> Seq.exists (fun (x, y) -> bad.Contains(sprintf "%c%c" x y))
 
 let isNice s =
-    s |> atLeastThreeVowels && s |> letterRepeated && not (s|> badCombinations)
+    atLeastThreeVowels s && 
+    letterRepeated s && 
+    not (badCombinations s)
 
 let rec twoConsecutiveLettersTwice s =
     if (String.length s < 3) then
