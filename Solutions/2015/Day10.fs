@@ -1,33 +1,50 @@
 ﻿module AoC.E2015.Day10
 
 
-open AoC
-open IO
-
 // --- Day 10: Elves Look, Elves Say ---
 
 let input = "3113322113"
 
-// so far it is just a copy of https://theburningmonk.com/2015/12/advent-of-code-f-day-10/
 
-let read (input : string) =
-    input
+let split input =
+   input
+   |> Seq.map (fun c -> int c - int '0')
+
+// matching inspired by https://theburningmonk.com/2015/12/advent-of-code-f-day-10/
+let segments (digits:int seq) =
+    digits
     |> Seq.fold (fun acc x ->
         match acc with
         | (n, x')::tl when x = x' -> (n+1, x')::tl
         | _ -> (1, x)::acc) []
-    |> List.rev
-    |> Seq.collect (fun (n, x) -> sprintf "%d%c" n x)
-    |> fun xs -> System.String.Join("", xs)
+    |> Seq.rev
+
+let flatten (segments:seq<(int*int)>) =
+
+    seq {
+        for (count, digit) in segments do
+            yield count
+            yield digit
+    }
 
 let firstStar () =
-    { 1..40 }
-    |> Seq.fold (fun last _ -> read last) input
+
+    let ds = split input
+
+    {1..40}
+    |> Seq.fold (fun last _ ->
+        last |> segments |> flatten
+    ) ds
     |> Seq.length
 
-let secondStar () = 
-    { 1..50 }
-    |> Seq.fold (fun last _ -> read last) input
+let secondStar () =
+
+    let ds = split input
+   
+    {1..50}
+    |> Seq.fold (fun last _ ->
+        last |> segments |> flatten
+    ) ds
     |> Seq.length
 
 module Tests =
