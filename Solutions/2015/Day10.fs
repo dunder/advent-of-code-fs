@@ -11,7 +11,7 @@ let split input =
    |> Seq.map (fun c -> int c - int '0')
 
 // matching inspired by https://theburningmonk.com/2015/12/advent-of-code-f-day-10/
-let segments (digits:int seq) =
+let segments digits =
     digits
     |> Seq.fold (fun acc x ->
         match acc with
@@ -19,7 +19,7 @@ let segments (digits:int seq) =
         | _ -> (1, x)::acc) []
     |> Seq.rev
 
-let flatten (segments:seq<(int*int)>) =
+let flatten segments =
 
     seq {
         for (count, digit) in segments do
@@ -27,25 +27,22 @@ let flatten (segments:seq<(int*int)>) =
             yield digit
     }
 
-let firstStar () =
-
+let iterate input count =
     let ds = split input
 
-    {1..40}
+    {1..count}
     |> Seq.fold (fun last _ ->
         last |> segments |> flatten
     ) ds
     |> Seq.length
+
+let firstStar () =
+
+    iterate input 40
 
 let secondStar () =
 
-    let ds = split input
-   
-    {1..50}
-    |> Seq.fold (fun last _ ->
-        last |> segments |> flatten
-    ) ds
-    |> Seq.length
+    iterate input 50
 
 module Tests =
 
