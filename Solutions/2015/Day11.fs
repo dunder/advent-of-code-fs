@@ -5,37 +5,26 @@ open System
 
 let input = "vzbxkghb"
 
-type Letter = private Letter of char
-
-module Letter  =
-    let create char = 
-        if char < 'a' || char > 'z' then
-            failwithf "A letter must be lowercase between 'a' and 'z' but was '%c'" char
-        else
-            Letter char
-
-    let value (Letter char) =
-        char
  
-let password input =
-    input |> Seq.map Letter.create 
-
 let forbidden = Set.ofList ['i';'o';'l']
 
-let increment (current:Letter) =
+let increment (c:char) =
+
+    let rec _increment (c:char) =
     
-    let n = (current |> Letter.value |> int) + 1
-    let z = 'z' |> int
-    if n > z then
-        Letter.create 'a', true
-    else 
-        n |> char |> Letter.create, false
+        let n = (c |> int) + 1
+        let nc = n |> char
+        match nc with
+        | x when x > 'z' -> 'a', true
+        | x when forbidden.Contains x -> _increment x
+        | _ -> nc, false
+
+    _increment c
 
 let next (current:string) =
 
     let letters = 
         current 
-        |> password
         |> Seq.rev
         |> Seq.fold (fun (overflow, acc) letter -> 
                 if overflow then
@@ -45,7 +34,6 @@ let next (current:string) =
                     (false, letter::acc)
             ) (true, [])
         |> snd 
-        |> Seq.map Letter.value
 
     String.Join("", letters)
 
@@ -113,8 +101,8 @@ module Tests =
     [<InlineData('a', 'b', false)>]
     [<InlineData('z', 'a', true)>]
     let ``increment tests`` current expectedNext expectedOverflow =
-        let next = increment <| Letter.create current
-        let expected = (Letter.create expectedNext, expectedOverflow)
+        let next = increment current
+        let expected = (expectedNext, expectedOverflow)
         Assert.Equal(expected, next)
 
 
