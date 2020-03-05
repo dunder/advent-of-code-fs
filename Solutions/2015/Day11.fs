@@ -18,8 +18,9 @@ module Letter  =
         char
  
 let password input =
-    input |> Seq.map Letter.create
+    input |> Seq.map Letter.create 
 
+let forbidden = Set.ofList ['i';'o';'l']
 
 let increment (current:Letter) =
     
@@ -30,9 +31,11 @@ let increment (current:Letter) =
     else 
         n |> char |> Letter.create, false
 
-let next current =
+let next (current:string) =
+
     let letters = 
         current 
+        |> password
         |> Seq.rev
         |> Seq.fold (fun (overflow, acc) letter -> 
                 if overflow then
@@ -54,28 +57,50 @@ let hasStraight input =
     |> Seq.windowed 3 
     |> Seq.exists straight
 
-let forbidden = Set.ofList ['i';'o';'l']
 
 let hasNotForbiddenLetter (input:string) =
     input |> Seq.exists (fun c -> forbidden |> (Set.exists (fun s -> s = c))) |> not
-   
+
+let hasAtLeastTwoDoubledLetters (input:string) =
+    let doubles = 
+        input
+        |> Seq.fold (fun acc letter ->
+            match acc with
+            | (n, previous)::tl when letter = previous && n = 2 -> (1, letter)::tl
+            | (n, previous)::tl when letter = previous -> (n+1, previous)::tl
+            | _ -> (1, letter)::acc) []
+        |> Seq.filter (fun (count, _) -> count = 2)
+        |> Seq.length
+        
+    doubles > 1
+
+let isValidPassword password =
+    hasStraight password && 
+    hasNotForbiddenLetter password && 
+    hasAtLeastTwoDoubledLetters password
+
+let nextPassword pwd = 
+    Seq.unfold (fun password -> 
+        let nextPassword = next password
+        Some (nextPassword, nextPassword)) pwd
+    |> Seq.filter isValidPassword
+    |> Seq.head
 
 let firstStar () =
-
-    ""
+    
+    nextPassword input
 
 let secondStar () =
 
-    ""
+    nextPassword (nextPassword input)
 
 module Tests =
 
     open Xunit
 
-
     [<Fact>]
     let ``first star`` () =
-
+        
         Assert.Equal("vzbxxyzz", firstStar())
 
     [<Fact>]
@@ -97,10 +122,9 @@ module Tests =
     [<InlineData("abc", "abd")>]
     [<InlineData("abz", "aca")>]
     [<InlineData("azz", "baa")>]
-    let ``next tests`` input expected =
-        let actual = password input |> List.ofSeq
+    let ``next tests`` password expected =
 
-        let n = next actual
+        let n = next password
 
         Assert.Equal(expected, n)
 
@@ -152,5 +176,27 @@ module Tests =
         let actual = hasNotForbiddenLetter input
 
         Assert.False(actual)
+
+    [<Theory>]
+    [<InlineData("aabcc")>]
+    let ``hasAtLeastTwoDoubledLetters true`` input =
+        let actual = hasAtLeastTwoDoubledLetters input
+
+        Assert.True(actual)
+
+    [<Theory>]
+    [<InlineData("aaa")>]
+    let ``hasAtLeastTwoDoubledLetters false`` input =
+        let actual = hasAtLeastTwoDoubledLetters input
+
+        Assert.False(actual)
+
+    [<Theory>]
+    [<InlineData("abcdefgh", "abcdffaa")>]
+    [<InlineData("ghijklmn", "ghjaabcc")>]
+    let ``nextPassword tests`` password expectedNext =
+        let actual = nextPassword password
+
+        Assert.Equal(expectedNext, actual)
         
 
