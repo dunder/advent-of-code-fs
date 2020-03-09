@@ -45,9 +45,12 @@ let hasStraight input =
     |> Seq.windowed 3 
     |> Seq.exists straight
 
-
 let hasNotForbiddenLetter (input:string) =
-    input |> Seq.exists (fun c -> forbidden |> (Set.exists (fun s -> s = c))) |> not
+    input 
+    |> Seq.exists (fun c -> 
+        forbidden 
+        |> (Set.exists (fun s -> s = c))) 
+    |> not
 
 let hasAtLeastTwoDoubledLetters (input:string) =
     let doubles = 
@@ -155,10 +158,6 @@ module Tests =
     [<InlineData("gof")>]
     [<InlineData("glf")>]
     [<InlineData("lf")>]
-    [<InlineData("lf")>]
-    [<InlineData("lf")>]
-    [<InlineData("fl")>]
-    [<InlineData("fl")>]
     [<InlineData("fl")>]
     let ``hasNotForbidden false`` input =
         let actual = hasNotForbiddenLetter input
