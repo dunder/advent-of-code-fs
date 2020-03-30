@@ -30,8 +30,8 @@ let parse input =
         | '}' -> 
             if hasValue (state.parsed |> List.take state.liveObjectCounters.Head) "red" then
                 match state.liveObjectCounters with
-                | [_] -> { parsed = c::(state.parsed |> List.skip state.liveObjectCounters.Head); liveObjectCounters = [] }
-                | _::xs -> { parsed = c::(state.parsed |> List.skip state.liveObjectCounters.Head); liveObjectCounters = (xs.Head + 1)::xs.Tail }
+                | [_] -> { parsed = c::(state.parsed |> List.skip (state.liveObjectCounters.Head - 1)); liveObjectCounters = [] }
+                | _::xs -> { parsed = c::(state.parsed |> List.skip (state.liveObjectCounters.Head - 1)); liveObjectCounters = (xs.Head + 2)::xs.Tail }
                 | _ -> failwith "Unexpected emptyOpenCount when closing discarded object"
             else 
                 match state.liveObjectCounters with
