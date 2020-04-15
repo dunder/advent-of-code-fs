@@ -1,6 +1,5 @@
 ﻿module AoC.E2015.Day13
 
-open System.Collections.Generic
 open System.Text.RegularExpressions
 
 open AoC
@@ -48,8 +47,7 @@ let addMe happiness =
 let optimalHapiness hapiness =
     let happinessMap = buildMap hapiness
 
-    let permutations = permutations <| List.ofSeq happinessMap.Keys
-    permutations
+    permutations (List.ofSeq happinessMap.Keys)
     |> Seq.map (fun xs -> 
         let a = Array.ofSeq xs
         let first = a.[0]
