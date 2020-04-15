@@ -33,17 +33,22 @@ let parse lines =
 // build a dict of dict from a tuple of three (a,b,c) where
 // a will be the key in the first dict and its value ia another dict where
 // b will be the key and c the value
-let buildMap tuplesOfThree =
-    tuplesOfThree
+let buildMap hapiness =
+    hapiness
     |> Seq.groupBy (fun (a, _, _) -> a)
     |> Seq.map (fun (a, group) -> (a, group |> Seq.map (fun (_, b, c) -> (b, c)) |> dict))
     |> dict
 
-let optimalHapiness input =
-    let specs = parse input
-    let hapinessMap = buildMap specs
+let addMe happiness = 
+    let guests = happiness |> Seq.map (fun (a, _, _) -> a) |> Seq.distinct 
+    let meWithGuests = guests |> Seq.map (fun g -> ("me", g, 0)) |> List.ofSeq
+    let guestsWithMe = guests |> Seq.map (fun g -> (g, "me", 0)) |> List.ofSeq
+    List.ofSeq happiness @ meWithGuests @ guestsWithMe
 
-    let permutations = permutations <| List.ofSeq hapinessMap.Keys
+let optimalHapiness hapiness =
+    let happinessMap = buildMap hapiness
+
+    let permutations = permutations <| List.ofSeq happinessMap.Keys
     permutations
     |> Seq.map (fun xs -> 
         let a = Array.ofSeq xs
@@ -51,21 +56,21 @@ let optimalHapiness input =
         let last = a.[Array.length a - 1]
         (xs 
         |> Seq.pairwise 
-        |> Seq.map (fun (a,b) -> hapinessMap.[a].[b] + hapinessMap.[b].[a]) 
+        |> Seq.map (fun (a,b) -> happinessMap.[a].[b] + happinessMap.[b].[a]) 
         |> Seq.sum) + 
-        hapinessMap.[first].[last] + 
-        hapinessMap.[last].[first]
+        happinessMap.[first].[last] + 
+        happinessMap.[last].[first]
     )
     |> Seq.sortDescending
-    |> List.ofSeq
-    |> List.head
-    
+    |> Seq.head
 
 let firstStar () =
-    optimalHapiness input
+    let hapiness = parse input
+    optimalHapiness hapiness
 
 let secondStar () = 
-    0
+    let hapiness = addMe (parse input)
+    optimalHapiness hapiness
 
 
 module Tests =
@@ -98,5 +103,5 @@ module Tests =
             "David would lose 7 happiness units by sitting next to Bob."
             "David would gain 41 happiness units by sitting next to Carol."
         ]
-        let hapiness = optimalHapiness input
+        let hapiness = optimalHapiness (parse input)
         Assert.Equal(330, hapiness)
