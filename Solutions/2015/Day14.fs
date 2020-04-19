@@ -40,14 +40,34 @@ let maxDistance input seconds =
     deers 
     |> Seq.map (fun deer -> deer.Distance seconds)
     |> Seq.max
+
+let leaders (deers:seq<Raindeer>) seconds = 
+    let standing =
+        deers 
+        |> Seq.sortByDescending (fun d -> d.Distance seconds)
+        |> Seq.toList
+
+    let leadingDistance = standing.Head.Distance seconds
+    
+    standing |> Seq.takeWhile (fun d -> d.Distance seconds = leadingDistance)
+
+let maxScore input seconds =
+    let deers = parse input
+    
+    {1 .. seconds}
+    |> Seq.collect(fun t  ->
+        leaders deers t
+    )
+    |> Seq.groupBy (fun d -> d.Name)
+    |> Seq.map (fun (key, group) -> Seq.length group)
+    |> Seq.max
     
 
 let firstStar () =
-    
     maxDistance input 2503
 
 let secondStar () = 
-    0
+    maxScore input 2503
 
 
 module Tests =
@@ -62,7 +82,7 @@ module Tests =
     [<Fact>]
     let ``second star`` () =
 
-        Assert.Equal(-1, secondStar())
+        Assert.Equal(1102, secondStar())
         
     [<Theory>]
     [<InlineData(1, 14)>]
@@ -98,3 +118,14 @@ module Tests =
 
         let maxDistance = parse input |> Seq.map (fun deer -> deer.Distance 1000) |> Seq.max
         Assert.Equal(1120, maxDistance)
+
+    [<Fact>]
+    let ``second star example`` () =
+        let input = [|
+            "Comet can fly 14 km/s for 10 seconds, but then must rest for 127 seconds."
+            "Dancer can fly 16 km/s for 11 seconds, but then must rest for 162 seconds."
+        |]
+
+        let maxScore = maxScore input 1000
+
+        Assert.Equal(689, maxScore)
