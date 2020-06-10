@@ -18,6 +18,22 @@ let (|Regex|_|) pattern input =
 
 type Ingredient = { Name: string; Capacity: int; Durability: int; Flavor: int; Texture: int; Calories: int}
 
+let score ingredients amounts =
+    let ingredientAmounts = amounts |> List.zip ingredients
+    [
+        ingredientAmounts 
+            |> Seq.sumBy (fun (ingredient, amount) -> ingredient.Capacity*amount)
+        ingredientAmounts 
+            |> Seq.sumBy (fun (ingredient, amount) -> ingredient.Durability*amount)
+        ingredientAmounts 
+            |> Seq.sumBy (fun (ingredient, amount) -> ingredient.Flavor*amount)
+        ingredientAmounts 
+            |> Seq.sumBy (fun (ingredient, amount) -> ingredient.Texture*amount)
+    ] 
+    |> Seq.map (fun x -> max 0 x)
+    |> Seq.reduce (fun x y -> x * y)
+    
+
 let parse input = 
     input
     |> Seq.map (fun line -> 
@@ -36,23 +52,26 @@ let parse input =
 
 let permutations ingredients totalAmount = 
 
-    let rec loop ingredients (currentAmount, acc) = 
+    let rec loop ingredients currentAmount accPermutations = 
         
         seq {
             match ingredients with
-            | [ingredient] -> yield (ingredient, totalAmount-currentAmount)::acc
-            | ingredient::ingredients -> 
+            | [] -> yield accPermutations
+            | [_] -> yield (totalAmount-currentAmount)::accPermutations
+            | _::xs -> 
                 for n in 0..totalAmount - currentAmount do
-                    yield! loop ingredients (currentAmount + n, (ingredient, n)::acc)
-            | [] -> yield acc
+                    yield! loop xs (currentAmount + n) (n::accPermutations)
         }
 
-    loop ingredients (0, [])
+    loop ingredients 0 []
 
 let firstStar () =
-    let result = permutations ['A';'B'] 100
-    0
-
+    let ingredients = List.ofSeq <| parse input
+    let permutations = permutations ingredients 100
+    permutations
+        |> Seq.map (fun p -> score ingredients p)
+        |> Seq.max
+        
 let secondStar () = 
     0
 
@@ -64,9 +83,20 @@ module Tests =
     [<Fact>]
     let ``first star`` () =
 
-        Assert.Equal(-1, firstStar())
+        Assert.Equal(13882464, firstStar())
 
     [<Fact>]
     let ``second star`` () =
 
         Assert.Equal(-1, secondStar())
+        
+    [<Fact>]
+    let ``first star example`` () =
+        
+        let ingredients = [
+            { Name = "Butterscotch"; Capacity = -1; Durability = -2; Flavor = 6; Texture = 3; Calories = 8 }
+            { Name = "Cinnamon"; Capacity = 2; Durability = 3; Flavor = -2; Texture = -1; Calories = 3 }
+        ]
+        let amounts = [44;56]
+        let score = score ingredients amounts
+        Assert.Equal(62842880, score)
