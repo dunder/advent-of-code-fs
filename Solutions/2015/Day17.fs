@@ -9,9 +9,6 @@ open IO
 
 let input = readInputLines "2015" "Day17"
  
-let parse input = 
-    0
-
 let firstStar () =
     let containers = input |> Seq.map int |> List.ofSeq
     
@@ -27,8 +24,6 @@ let firstStar () =
     |> List.filter (fun combo -> combo |> List.sum = 150)
     |> List.length
 
-
-        
 let secondStar () = 
     let containers = input |> Seq.map int |> List.ofSeq
     
