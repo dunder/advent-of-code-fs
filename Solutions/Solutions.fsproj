@@ -6,6 +6,7 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Compile Include="Matrix.fs" />
     <Compile Include="Combinatorics.fs" />
     <Compile Include="Cryptography.fs" />
     <Compile Include="IO.fs" />
@@ -53,6 +54,9 @@
     <Content Include="2015\Input\Day17.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="2015\Input\Day18.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Compile Include="2015\Day01.fs" />
     <Compile Include="2015\Day02.fs" />
     <Compile Include="2015\Day03.fs" />
@@ -70,6 +74,7 @@
     <Compile Include="2015\Day15.fs" />
     <Compile Include="2015\Day16.fs" />
     <Compile Include="2015\Day17.fs" />
+    <Compile Include="2015\Day18.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
