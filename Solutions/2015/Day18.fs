@@ -8,45 +8,43 @@ open Matrix
 
 let input = readInputLines "2015" "Day18"
  
-
 let parse (lines: list<string>) : int[,] =
-    let columns = String.length <| Seq.head lines
     let rows = Seq.length lines
-    let matrix = Array2D.zeroCreate columns rows
+    let columns = String.length <| Seq.head lines
+    let matrix = Array2D.zeroCreate rows columns
     
-    for x in 0..columns-1 do
-        for y in 0..rows-1 do
-            let c = lines.[y].[x]
+    for column in 0..columns-1 do
+        for row in 0..rows-1 do
+            let c = lines.[row].[column]
             let state = 
                 match c with 
                 | '#' -> 1
                 | '.' -> 0
                 | _ -> failwithf "Unkown character '%c'" c
-            matrix.[x,y] <- state
+            matrix.[column,row] <- state
         
     matrix
 
 let print (matrix:int[,]) : unit =
-    for x in 0..matrix.GetLength(0)-1 do
-        for y in 0..matrix.GetLength(1)-1 do
-            let state = matrix.[x,y]
-            let c = 
-                match state with 
-                | 1 -> '#'
-                | 0 -> '.'
-                | _ -> failwithf ""
+    matrix |> Array2D.iteri (fun _ column state -> 
+        let c = 
+            match state with 
+            | 1 -> '#'
+            | 0 -> '.'
+            | _ -> failwithf ""
+        printf "%c" c
+        if column = matrix.GetLength(1)-1 then
+            printfn ""
+    )
 
-            printf "%c" c
-        printfn ""
-
-let valid (matrix: int[,], p: Position) =
-    let columns = matrix.GetLength(0)
-    let rows = matrix.GetLength(1)
-    p.X >= 0 && p.Y >= 0 && p.X < columns && p.Y < rows
+let inMatrix (matrix: int[,], p: Position) =
+    let rows = matrix.GetLength(0)
+    let columns = matrix.GetLength(1)
+    p.X >= 0 && p.X < columns && p.Y >= 0 &&  p.Y < rows
 
 let adjacent matrix p = 
     adjacentAllDirections p 
-    |> Seq.filter (fun x -> valid(matrix, x))
+    |> Seq.filter (fun x -> inMatrix(matrix, x))
 
 let on (matrix: int[,], p: Position) = 
     matrix.[p.X,p.Y] = 1
@@ -64,23 +62,23 @@ let nextState matrix p state =
     | (0, 3) -> 1
     | _ -> 0
 
-let next (matrix:int[,]) : int[,] =
-    let width = matrix.GetLength(0)
-    let height = matrix.GetLength(1)
-    let newMatrix = Array2D.zeroCreate width height
+let next (matrix:int[,], nextState:int[,]->Position->int->int) : int[,] =
+    let rows = matrix.GetLength(0)
+    let columns = matrix.GetLength(1)
+    let newMatrix = Array2D.zeroCreate rows columns
 
-    for x in 0..matrix.GetLength(0)-1 do
-        for y in 0..matrix.GetLength(1)-1 do
-            let state = matrix.[x,y]
-            let p = { X = x; Y = y}
+    for row in 0..matrix.GetLength(0)-1 do
+        for column in 0..matrix.GetLength(1)-1 do
+            let state = matrix.[row, column]
+            let p = { X = row; Y = column}
             let newState = nextState matrix p state
-            newMatrix.[x,y] <- newState
+            newMatrix.[row, column] <- newState
 
     newMatrix
 
 let corners (matrix:int[,]) = 
-    let columns = matrix.GetLength(0)
-    let rows = matrix.GetLength(1)
+    let rows = matrix.GetLength(0)
+    let columns = matrix.GetLength(1)
 
     seq {
         { X = 0; Y = 0 }
@@ -90,42 +88,18 @@ let corners (matrix:int[,]) =
     }
     
 let nextState2 matrix p state =
-    
-    let adjacentCount = 
-        adjacent matrix p 
-        |> Seq.filter (fun x -> on(matrix, x))
-        |> Seq.length
-
     let corners = corners matrix
 
     if Seq.contains p corners then
         1
     else
-        match (state, adjacentCount) with
-        | (1, 2) -> 1
-        | (1, 3) -> 1
-        | (0, 3) -> 1
-        | _ -> 0
-
-let next2 (matrix:int[,]) : int[,] =
-    let width = matrix.GetLength(0)
-    let height = matrix.GetLength(1)
-    let newMatrix = Array2D.zeroCreate width height
-
-    for x in 0..matrix.GetLength(0)-1 do
-        for y in 0..matrix.GetLength(1)-1 do
-            let state = matrix.[x,y]
-            let p = { X = x; Y = y}
-            let newState = nextState2 matrix p state
-            newMatrix.[x,y] <- newState
-
-    newMatrix
+        nextState matrix p state
 
 let firstStar () =
     let initialMatrix = parse <| List.ofSeq input
 
     { 1..100 }
-    |> Seq.fold (fun matrix _ -> (next matrix)) initialMatrix
+    |> Seq.fold (fun matrix _ -> (next(matrix,nextState))) initialMatrix
     |> Seq.cast<int>
     |> Seq.sum
    
@@ -137,7 +111,7 @@ let secondStar () =
         initialMatrix.[p.X,p.Y] <- 1
 
     { 1..100 }
-    |> Seq.fold (fun matrix _ -> (next2 matrix)) initialMatrix
+    |> Seq.fold (fun matrix _ -> (next(matrix, nextState2))) initialMatrix
     |> Seq.cast<int>
     |> Seq.sum
 
@@ -228,7 +202,7 @@ module Tests =
 
         let matrix1 = parse start
 
-        let next = next matrix1
+        let next = next(matrix1, nextState)
 
         let expected = [
             "..##.."
