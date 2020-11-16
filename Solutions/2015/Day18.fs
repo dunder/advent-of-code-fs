@@ -78,6 +78,49 @@ let next (matrix:int[,]) : int[,] =
 
     newMatrix
 
+let corners (matrix:int[,]) = 
+    let columns = matrix.GetLength(0)
+    let rows = matrix.GetLength(1)
+
+    seq {
+        { X = 0; Y = 0 }
+        { X = columns-1; Y = 0 }
+        { X = 0; Y = rows-1 }
+        { X = columns-1; Y = rows-1 }
+    }
+    
+let nextState2 matrix p state =
+    
+    let adjacentCount = 
+        adjacent matrix p 
+        |> Seq.filter (fun x -> on(matrix, x))
+        |> Seq.length
+
+    let corners = corners matrix
+
+    if Seq.contains p corners then
+        1
+    else
+        match (state, adjacentCount) with
+        | (1, 2) -> 1
+        | (1, 3) -> 1
+        | (0, 3) -> 1
+        | _ -> 0
+
+let next2 (matrix:int[,]) : int[,] =
+    let width = matrix.GetLength(0)
+    let height = matrix.GetLength(1)
+    let newMatrix = Array2D.zeroCreate width height
+
+    for x in 0..matrix.GetLength(0)-1 do
+        for y in 0..matrix.GetLength(1)-1 do
+            let state = matrix.[x,y]
+            let p = { X = x; Y = y}
+            let newState = nextState2 matrix p state
+            newMatrix.[x,y] <- newState
+
+    newMatrix
+
 let firstStar () =
     let initialMatrix = parse <| List.ofSeq input
 
@@ -86,11 +129,17 @@ let firstStar () =
     |> Seq.cast<int>
     |> Seq.sum
    
-    
-
 
 let secondStar () = 
-    0
+    let initialMatrix = parse <| List.ofSeq input
+    
+    for p in corners initialMatrix do
+        initialMatrix.[p.X,p.Y] <- 1
+
+    { 1..100 }
+    |> Seq.fold (fun matrix _ -> (next2 matrix)) initialMatrix
+    |> Seq.cast<int>
+    |> Seq.sum
 
 module Tests =
 
@@ -104,7 +153,7 @@ module Tests =
     [<Fact>]
     let ``second star`` () =
 
-        Assert.Equal(-1, secondStar())
+        Assert.Equal(1006, secondStar())
 
     type Expected() as this = 
         inherit TheoryData<int, Position>()
