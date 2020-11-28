@@ -1,9 +1,11 @@
 ﻿module AoC.E2015.Day19
 
+open System;
 open System.Text.RegularExpressions;
 
 open AoC
 open IO
+open Sequences
 
 // --- Day 19: Medicine for Rudolph ---
 
@@ -28,7 +30,7 @@ let parseReplacements (lines:seq<string>) =
     )
 
 let parseMolecule lines = lines |> Seq.last
-    
+
 
 let firstStar () =
     let replacements = parseReplacements input
@@ -46,8 +48,18 @@ let firstStar () =
     |> Seq.distinct
     |> Seq.length
     
+// https://www.reddit.com/r/adventofcode/comments/3xflz8/day_19_solutions/
 let secondStar () = 
-    0
+    let replacements = parseReplacements input
+    let molecule = parseMolecule input
+    
+    let elements = molecule |> Seq.filter Char.IsUpper |> Seq.length
+
+    let groupingDelimeters = Regex.Matches(molecule, "(Rn|Ar)") |> Seq.length
+
+    let delimeters = molecule |> count 'Y'
+
+    elements-groupingDelimeters-2*delimeters-1
 
 
 module Tests =
@@ -62,4 +74,4 @@ module Tests =
     [<Fact>]
     let ``second star`` () =
 
-        Assert.Equal(-1, secondStar())
+        Assert.Equal(195, secondStar())

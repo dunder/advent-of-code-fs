@@ -1,7 +1,3 @@
 ﻿module AoC.Sequences
 
-let count x xs =
-    xs
-    |> Seq.filter (fun x' -> x' = x)
-    |> Seq.length
-
+let count x = Seq.filter ((=) x) >> Seq.length

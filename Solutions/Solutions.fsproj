@@ -6,6 +6,9 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="AStar\LICENSE.txt" />
+    <Compile Include="AStar\PriorityQueue.fs" />
+    <Compile Include="AStar\AStarAlgorithm.fs" />
     <Compile Include="Matrix.fs" />
     <Compile Include="Combinatorics.fs" />
     <Compile Include="Cryptography.fs" />
