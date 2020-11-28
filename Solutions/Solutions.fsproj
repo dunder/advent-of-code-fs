@@ -6,6 +6,28 @@
   </PropertyGroup>
 
   <ItemGroup>
+    <Content Include="2020\Input\Day04.txt" />
+    <Content Include="2020\Input\Day05.txt" />
+    <Content Include="2020\Input\Day06.txt" />
+    <Content Include="2020\Input\Day07.txt" />
+    <Content Include="2020\Input\Day08.txt" />
+    <Content Include="2020\Input\Day09.txt" />
+    <Content Include="2020\Input\Day10.txt" />
+    <Content Include="2020\Input\Day11.txt" />
+    <Content Include="2020\Input\Day12.txt" />
+    <Content Include="2020\Input\Day13.txt" />
+    <Content Include="2020\Input\Day14.txt" />
+    <Content Include="2020\Input\Day15.txt" />
+    <Content Include="2020\Input\Day16.txt" />
+    <Content Include="2020\Input\Day17.txt" />
+    <Content Include="2020\Input\Day18.txt" />
+    <Content Include="2020\Input\Day19.txt" />
+    <Content Include="2020\Input\Day20.txt" />
+    <Content Include="2020\Input\Day21.txt" />
+    <Content Include="2020\Input\Day22.txt" />
+    <Content Include="2020\Input\Day23.txt" />
+    <Content Include="2020\Input\Day24.txt" />
+    <Content Include="2020\Input\Day25.txt" />
     <Content Include="AStar\LICENSE.txt" />
     <Compile Include="AStar\PriorityQueue.fs" />
     <Compile Include="AStar\AStarAlgorithm.fs" />
@@ -82,6 +104,35 @@
     <Compile Include="2015\Day17.fs" />
     <Compile Include="2015\Day18.fs" />
     <Compile Include="2015\Day19.fs" />
+    <Compile Include="2015\Day20.fs" />
+    <Content Include="2020\Input\Day01.txt" />
+    <Content Include="2020\Input\Day02.txt" />
+    <Content Include="2020\Input\Day03.txt" />
+    <Compile Include="2020\Day01.fs" />
+    <Compile Include="2020\Day02.fs" />
+    <Compile Include="2020\Day03.fs" />
+    <Compile Include="2020\Day04.fs" />
+    <Compile Include="2020\Day05.fs" />
+    <Compile Include="2020\Day06.fs" />
+    <Compile Include="2020\Day07.fs" />
+    <Compile Include="2020\Day08.fs" />
+    <Compile Include="2020\Day09.fs" />
+    <Compile Include="2020\Day10.fs" />
+    <Compile Include="2020\Day11.fs" />
+    <Compile Include="2020\Day12.fs" />
+    <Compile Include="2020\Day13.fs" />
+    <Compile Include="2020\Day14.fs" />
+    <Compile Include="2020\Day15.fs" />
+    <Compile Include="2020\Day16.fs" />
+    <Compile Include="2020\Day17.fs" />
+    <Compile Include="2020\Day18.fs" />
+    <Compile Include="2020\Day19.fs" />
+    <Compile Include="2020\Day20.fs" />
+    <Compile Include="2020\Day21.fs" />
+    <Compile Include="2020\Day22.fs" />
+    <Compile Include="2020\Day23.fs" />
+    <Compile Include="2020\Day24.fs" />
+    <Compile Include="2020\Day25.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 

@@ -1,6 +1,7 @@
 ﻿module Aoc.Program
 
-open AoC.E2015
+open System.IO
+open AoC
 
 let printByType (text : string, result : obj) =
     match result with
@@ -11,9 +12,12 @@ let printByType (text : string, result : obj) =
 
 [<EntryPoint>]
 let main _args =
-    printByType ("First star: ", Day15.firstStar())
-    printfn "\n"
-    printByType ("Second star:", Day05.secondStar())
-    printfn "\n"
+    for n in 4..25 do
+        let fileName = sprintf "C:\\Users\\matjan\\source\\repos\\advent-of-code-fs\\Solutions\\2020\\Input\\Day%02i.txt" n
+        File.Create(fileName) |> ignore
+    //printByType ("First star: ", E2015.Day15.firstStar())
+    //printfn "\n"
+    //printByType ("Second star:", E2015.Day05.secondStar())
+    //printfn "\n"
     0
 
