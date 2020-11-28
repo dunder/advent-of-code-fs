@@ -3,9 +3,9 @@
 open AoC
 open IO
 
-// 
+// --- Day 20: Infinite Elves and Infinite Houses ---
 
-let input = readInputText "2015" "Day20"
+let input = 36000000
 
 
 let firstStar () =
