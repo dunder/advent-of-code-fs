@@ -14,10 +14,9 @@ let firstStar () =
         seq {
             for x in 0..Seq.length input-1 do
                 for y in 0..Seq.length input-1 do
-                    yield (report.[x],report.[y])
+                    yield (report.[x], report.[y])
         }
-        |> Seq.filter (fun (x,y) -> x + y = 2020)
-        |> Seq.head
+        |> Seq.find (fun (x,y) -> x + y = 2020)
     
     x*y
 
@@ -28,10 +27,9 @@ let secondStar () =
             for x in 0..Seq.length input-1 do
                 for y in 0..Seq.length input-1 do
                     for z in 0..Seq.length input-1 do
-                        yield (report.[x],report.[y], report.[z])
+                        yield (report.[x], report.[y], report.[z])
         }
-        |> Seq.filter (fun (x,y,z) -> x + y + z = 2020)
-        |> Seq.head
+        |> Seq.find (fun (x,y,z) -> x + y + z = 2020)
 
     x*y*z
 
