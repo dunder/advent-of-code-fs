@@ -9,6 +9,7 @@ let input = 36000000
 
 
 let firstStar () =
+
     0
 
 let secondStar () = 

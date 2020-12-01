@@ -83,31 +83,81 @@
     <Compile Include="2015\Day18.fs" />
     <Compile Include="2015\Day19.fs" />
     <Compile Include="2015\Day20.fs" />
-    <Content Include="2020\Input\Day04.txt" />
-    <Content Include="2020\Input\Day05.txt" />
-    <Content Include="2020\Input\Day06.txt" />
-    <Content Include="2020\Input\Day07.txt" />
-    <Content Include="2020\Input\Day08.txt" />
-    <Content Include="2020\Input\Day09.txt" />
-    <Content Include="2020\Input\Day10.txt" />
-    <Content Include="2020\Input\Day11.txt" />
-    <Content Include="2020\Input\Day12.txt" />
-    <Content Include="2020\Input\Day13.txt" />
-    <Content Include="2020\Input\Day14.txt" />
-    <Content Include="2020\Input\Day15.txt" />
-    <Content Include="2020\Input\Day16.txt" />
-    <Content Include="2020\Input\Day17.txt" />
-    <Content Include="2020\Input\Day18.txt" />
-    <Content Include="2020\Input\Day19.txt" />
-    <Content Include="2020\Input\Day20.txt" />
-    <Content Include="2020\Input\Day21.txt" />
-    <Content Include="2020\Input\Day22.txt" />
-    <Content Include="2020\Input\Day23.txt" />
-    <Content Include="2020\Input\Day24.txt" />
-    <Content Include="2020\Input\Day25.txt" />
-    <Content Include="2020\Input\Day01.txt" />
-    <Content Include="2020\Input\Day02.txt" />
-    <Content Include="2020\Input\Day03.txt" />
+    <Content Include="2020\Input\Day01.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day02.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day03.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day04.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day05.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day06.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day07.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day08.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day09.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day10.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day11.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day12.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day13.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day14.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day15.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day16.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day17.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day18.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day19.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day20.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day21.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day22.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day23.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day24.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2020\Input\Day25.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Compile Include="2020\Day01.fs" />
     <Compile Include="2020\Day02.fs" />
     <Compile Include="2020\Day03.fs" />
