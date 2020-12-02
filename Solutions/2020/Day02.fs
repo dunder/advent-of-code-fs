@@ -38,12 +38,13 @@ let valid (policyCheck:PasswordPolicyCheck) =
 let valid2 (policyCheck:PasswordPolicyCheck) =
 
     let password = policyCheck.Password
-    let letter = policyCheck.Letter
-    let lowIndex = policyCheck.Low-1
-    let highIndex = policyCheck.High-1
 
     let within index =
         index >= 0 && index < String.length password
+
+    let letter = policyCheck.Letter
+    let lowIndex = policyCheck.Low-1
+    let highIndex = policyCheck.High-1
 
     let hasLow = (within lowIndex) && password.[lowIndex] = letter
     let hasHigh = (within highIndex) && password.[highIndex] = letter
