@@ -5,7 +5,7 @@ open IO
 
 // 
 
-let input = readInputText "2020" "Day11"
+let input = readInputLines "2020" "Day11" |> List.ofSeq
 
 
 let firstStar () =
