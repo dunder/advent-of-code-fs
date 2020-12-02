@@ -16,7 +16,6 @@ let bossHitPoints = parseNumber(input, "Hit Points")
 let bossDamage = parseNumber(input, "Damage")
 let bossArmor = parseNumber(input, "Armor")
 
-
 type Equipment = { Name:string; Cost:int; Damage:int; Armor: int }
 type EquipmentSet = { Equipment:seq<Equipment> } with
     member x.Cost = x.Equipment |> Seq.sumBy (fun e -> e.Cost)
@@ -24,7 +23,6 @@ type EquipmentSet = { Equipment:seq<Equipment> } with
     member x.Armor = x.Equipment |> Seq.sumBy (fun e -> e.Armor)
 
 type FightConfig = { Damage:int; Armor: int }
-
 
 let weapons = [
     { Name = "Dagger     "; Cost =  8; Damage = 4; Armor = 0 }
@@ -52,18 +50,22 @@ let rings = [
 ]
 
 let equipmentSets = 
-    let weaponOnly = seq {{ Equipment = weapons }}
+    let weaponOnly = 
+        seq {
+            for w in 0..weapons.Length-1 do
+                yield { Equipment = [weapons.[w]] }
+        }
     let weaponWithArmor = 
          seq {
-             for w in 1..weapons.Length-1 do
+             for w in 0..weapons.Length-1 do
                  for a in 1..armor.Length-1 do
                      yield { Equipment = [weapons.[w];armor.[a]] }
          }
     
     let weaponOneRing = 
          seq {
-             for w in 1..weapons.Length-1 do
-                 for r in 1..rings.Length-1 do
+             for w in 0..weapons.Length-1 do
+                 for r in 0..rings.Length-1 do
                      yield {Equipment = [weapons.[w];rings.[r]]}
          }
     
@@ -71,32 +73,32 @@ let equipmentSets =
     
     let weaponTwoRings = 
          seq {
-             for w in 1..weapons.Length-1 do
-                 for r in 1..ringCombinations.Length-1 do
+             for w in 0..weapons.Length-1 do
+                 for r in 0..ringCombinations.Length-1 do
                      yield { Equipment = weapons.[w]::ringCombinations.[r] }
          }
     
     let weaponArmorOneRing = 
         seq {
-            for w in 1..weapons.Length-1 do
-                for a in 1..armor.Length-1 do
-                    for r in 1..rings.Length-1 do
+            for w in 0..weapons.Length-1 do
+                for a in 0..armor.Length-1 do
+                    for r in 0..rings.Length-1 do
                         yield { Equipment = [weapons.[w];armor.[a];rings.[r]] }
         }
     
     let weaponArmorTwoRings = 
         seq {
-            for w in 1..weapons.Length-1 do
-                for a in 1..armor.Length-1 do
-                    for r in 1..ringCombinations.Length-1 do
+            for w in 0..weapons.Length-1 do
+                for a in 0..armor.Length-1 do
+                    for r in 0..ringCombinations.Length-1 do
                         yield { Equipment = weapons.[w]::armor.[a]::ringCombinations.[r] }
         }
     
     seq {
         yield! weaponOnly
         yield! weaponOneRing
-        yield! weaponWithArmor
         yield! weaponTwoRings
+        yield! weaponWithArmor
         yield! weaponArmorOneRing
         yield! weaponArmorTwoRings
      }
@@ -123,6 +125,7 @@ let playerWins ((boss, player), bossConfig:FightConfig, playerConfig:FightConfig
         |> Seq.find (fun (boss, player, _) -> boss <= 0 || player <=0)
     player > 0
 
+
 let firstStar () =
     
     let bossConfig = { Damage = bossDamage; Armor = bossArmor}
@@ -138,21 +141,15 @@ let firstStar () =
 
 let secondStar () = 
     let bossConfig = { Damage = bossDamage; Armor = bossArmor}
-    
-    let equipmentSet = 
+    let winningEquipment = 
         equipmentSets 
-        |> Seq.groupBy (fun e ->
-               let playerConfig = { Damage = e.Damage; Armor = e.Armor }
-               playerWins ((bossHitPoints, 100), bossConfig, playerConfig)
-        ) 
-        |> Seq.filter (fun (playerWins, _) -> not playerWins)
-        |> Seq.map (fun (_, equipmentSet) -> equipmentSet)
-        |> Seq.exactlyOne
         |> Seq.sortByDescending (fun e -> e.Cost)
-        |> Seq.head
-
-    equipmentSet.Cost        
-    // 190 too low 356 too high
+        |> Seq.find (fun e ->
+               let playerConfig = { Damage = e.Damage; Armor = e.Armor }
+               not <| playerWins ((bossHitPoints, 100), bossConfig, playerConfig)
+            )
+    
+    winningEquipment.Cost     
 
 module Tests =
 
@@ -164,7 +161,7 @@ module Tests =
 
     [<Fact>]
     let ``second star`` () =
-        Assert.Equal(-1, secondStar())
+        Assert.Equal(201, secondStar())
         
 
 
