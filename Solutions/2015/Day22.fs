@@ -77,37 +77,44 @@ let bossAttack (bossDamage:int) (state:GameState) =
             PlayerHitPoints = state.PlayerHitPoints - reduction
     }
 
-let rec fight (spent:int) (state:GameState) (bossDamage:int): seq<int option> =
+let rec fight (spent:int) (maxSpent:int) (hard:bool) (state:GameState) (bossDamage:int): seq<int option> =
     let state = state |> applyEffects
 
+    let maxSpent = if state.BossHitPoints <= 0 then min spent maxSpent else maxSpent
+    
     if state.BossHitPoints <= 0 then 
-        Seq.singleton (Some(spent))
+        if spent > maxSpent then
+            Seq.singleton None
+        else
+            Seq.singleton (Some(spent))
     else 
         if state.PlayersTurn then
-            let affordableNonActiveSpells = 
-                spells
-                |> Seq.filter (fun spell -> not (state.ActiveSpells |> Seq.exists (fun s -> s.Type = spell.Type)))
-                |> Seq.filter (fun spell -> spell.Cost <= state.Mana)
-                |> List.ofSeq
+            let state = if hard then { state with PlayerHitPoints = state.PlayerHitPoints - 1 } else state
+            if state.PlayerHitPoints <= 0 then
+                Seq.singleton None
+            else 
+                let affordableNonActiveSpells = 
+                    spells
+                    |> Seq.filter (fun spell -> not (state.ActiveSpells |> Seq.exists (fun s -> s.Type = spell.Type)))
+                    |> Seq.filter (fun spell -> spell.Cost <= state.Mana)
+                    |> List.ofSeq
 
-            match affordableNonActiveSpells with
-            | [] -> Seq.singleton None
-            | spells -> 
-                seq {
-                    for spell in spells do
-                        let spent = spent + spell.Cost
-                        let state = castSpell spell state
-                        yield! fight spent state bossDamage
-                }
+                match affordableNonActiveSpells with
+                | [] -> Seq.singleton None
+                | spells -> 
+                    seq {
+                        for spell in spells do
+                            let spent = spent + spell.Cost
+                            let state = castSpell spell state
+                            yield! fight spent maxSpent hard state bossDamage
+                    }
         else 
             let state = bossAttack bossDamage state
             if state.PlayerHitPoints <= 0 then
                 Seq.singleton None
             else
-                fight spent state bossDamage
+                fight spent maxSpent hard state bossDamage
         
-        
-                
 
 let firstStar () =
 
@@ -118,17 +125,21 @@ let firstStar () =
         Mana = 500
         ActiveSpells = Seq.empty
     }
-    let fights = fight 0 initialGameState bossDamage
-
-    let x = fights |> List.ofSeq
-
-    fights |> Seq.choose (fun x -> x) |> Seq.min
     
+    fight 0 System.Int32.MaxValue false initialGameState bossDamage |> Seq.choose (fun x -> x) |> Seq.min
     
-
 let secondStar () = 
     
-    0  
+    let initialGameState = {
+        PlayersTurn = true
+        BossHitPoints = bossHitPoints
+        PlayerHitPoints = 50
+        Mana = 500
+        ActiveSpells = Seq.empty
+    }
+
+    fight 0 System.Int32.MaxValue true initialGameState bossDamage |> Seq.choose (fun x -> x) |> Seq.min
+
 
 module Tests =
 
