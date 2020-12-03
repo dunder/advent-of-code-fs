@@ -2,7 +2,6 @@
 
 open AoC
 open IO
-open Astar
 
 // --- Day 22: Wizard Simulator 20XX ---
 
@@ -15,110 +14,99 @@ let parseNumber (lines:seq<string>, startsWith:string) =
 let bossHitPoints = parseNumber(input, "Hit Points")
 let bossDamage = parseNumber(input, "Damage")
 
-type SpellType = MagicMissile | Drain | Shield | Posison | Recharge
-type Spell = { Type: SpellType; ManaReduction: int }
-type EffectType = Shield | Poison | Recharge
-type EffectImpact = { Damage: int; Armor: int; Mana: int }
-type Effect = { Type: EffectType; Duration: int; Impact: EffectImpact}
+type SpellType = MagicMissile | Drain | Shield | Poison | Recharge
+type Spell = { Type: SpellType; Cost: int; Damage: int; Armor: int; Healing: int; Mana: int; Duration: int }
+
+let magicMissile = { Type = MagicMissile; Cost = 53;  Damage = 4; Armor = 0; Healing = 0; Mana = 0;   Duration = 1 }
+let drain =        { Type = Drain;        Cost = 73;  Damage = 2; Armor = 0; Healing = 2; Mana = 0;   Duration = 1 }
+let shield =       { Type = Shield;       Cost = 113; Damage = 0; Armor = 7; Healing = 0; Mana = 0;   Duration = 6 }
+let poison =       { Type = Poison;       Cost = 173; Damage = 3; Armor = 0; Healing = 0; Mana = 0;   Duration = 6 }
+let recharge =     { Type = Recharge;     Cost = 229; Damage = 0; Armor = 0; Healing = 0; Mana = 101; Duration = 5 }
+
+
+let spells = [ magicMissile; drain; shield; poison; recharge ]
 
 type GameState = { 
     PlayersTurn: bool
     BossHitPoints: int
     PlayerHitPoints: int
     Mana: int
-    ShieldEffectDuration: int
-    PoisonEffectDuration: int
-    RechargeEffectDuration: int
+    ActiveSpells: seq<Spell>
 }
     
 let applyEffects (state:GameState) = 
-    let poisonImpact = if state.PoisonEffectDuration > 0 then 3 else 0
-    let rechargeImpact = if state.RechargeEffectDuration > 0 then 101 else 0
+    let damageEffect = state.ActiveSpells |> Seq.sumBy (fun s -> s.Damage)
+    let manaEffect = state.ActiveSpells |> Seq.sumBy (fun s -> s.Mana)
+    let healingEffect = state.ActiveSpells |> Seq.sumBy (fun s -> s.Healing)
+
+    let activeSpells = 
+        state.ActiveSpells 
+        |> Seq.map (fun spell -> 
+            {
+                spell with
+                    Duration = spell.Duration - 1
+            }
+        )
+        |> Seq.filter (fun spell -> spell.Duration > 0)
 
     {
         state with
-            BossHitPoints = state.BossHitPoints - poisonImpact
-            Mana = state.Mana + rechargeImpact
-            ShieldEffectDuration = max 0 (state.ShieldEffectDuration - 1)
-            PoisonEffectDuration = max 0 (state.PoisonEffectDuration - 1)
-            RechargeEffectDuration = max 0 (state.RechargeEffectDuration - 1)
+            BossHitPoints = state.BossHitPoints - damageEffect
+            PlayerHitPoints = state.PlayerHitPoints + healingEffect
+            Mana = state.Mana + manaEffect
+            ActiveSpells = activeSpells
     }
 
-let bossAttack (damage:int) (state:GameState) = 
-    let shieldImpact = if state.ShieldEffectDuration > 0 then 7 else 0
-    let playerHitPointsReduction = max 1 (damage - shieldImpact)
+let castSpell spell (state:GameState) = 
+    {
+        state with
+            Mana = state.Mana - spell.Cost
+            PlayersTurn = false
+            ActiveSpells = seq { 
+                yield! state.ActiveSpells
+                yield spell
+            }
+    }
+
+let bossAttack (bossDamage:int) (state:GameState) =
+    let armorEffect = state.ActiveSpells |> Seq.sumBy (fun spell -> spell.Armor)
+    let reduction = max 1 (bossDamage - armorEffect)
     {
         state with
             PlayersTurn = true
-            PlayerHitPoints = state.PlayerHitPoints - playerHitPointsReduction
+            PlayerHitPoints = state.PlayerHitPoints - reduction
     }
 
-let castMagicMissile (state:GameState) = 
-    {
-        state with
-            PlayersTurn = false
-            BossHitPoints = state.BossHitPoints - 4
-            Mana = state.Mana - 53
-    }
-
-let castDrain (state:GameState) = 
-    {
-        state with
-            PlayersTurn = false
-            BossHitPoints = state.BossHitPoints - 2
-            PlayerHitPoints = state.PlayerHitPoints + 2
-            Mana = state.Mana - 73
-    }
-
-let castShield (state:GameState) = 
-    {
-        state with
-            PlayersTurn = false
-            Mana = state.Mana - 113
-            ShieldEffectDuration = 6
-    }
-
-let castPoison (state:GameState) = 
-    {
-        state with 
-            PlayersTurn = false
-            Mana = state.Mana - 173
-            PoisonEffectDuration = 6
-    }
-    
-let castRecharge (state:GameState) = 
-    {
-        state with
-            PlayersTurn = false
-            Mana = state.Mana - 229
-            RechargeEffectDuration = 5
-    }
-
-let nextPossibleStates (state:GameState) =
+let rec fight (spent:int) (state:GameState) (bossDamage:int): seq<int option> =
     let state = state |> applyEffects
-    if state.PlayerHitPoints <= 0 || state.BossHitPoints <= 0 then
-        Seq.empty
-    else
+
+    if state.BossHitPoints <= 0 then 
+        Seq.singleton (Some(spent))
+    else 
         if state.PlayersTurn then
-            let magicMissile = castMagicMissile state
-            let drain = castDrain state
-            let shield = castShield state
-            let poison = castPoison state
-            let recharge = castRecharge state
-            seq { 
-                if magicMissile.Mana >= 0 then
-                    yield magicMissile
-                if drain.Mana >= 0 then
-                    yield drain
-                if state.ShieldEffectDuration = 0 && shield.Mana >= 0 then
-                    yield shield
-                if state.PoisonEffectDuration = 0 && poison.Mana >= 0 then
-                    yield poison
-                if state.RechargeEffectDuration = 0 && recharge.Mana >= 0 then
-                    yield recharge
-            }
-        else
-            Seq.singleton (bossAttack bossDamage state)
+            let affordableNonActiveSpells = 
+                spells
+                |> Seq.filter (fun spell -> not (state.ActiveSpells |> Seq.exists (fun s -> s.Type = spell.Type)))
+                |> Seq.filter (fun spell -> spell.Cost <= state.Mana)
+                |> List.ofSeq
+
+            match affordableNonActiveSpells with
+            | [] -> Seq.singleton None
+            | spells -> 
+                seq {
+                    for spell in spells do
+                        let spent = spent + spell.Cost
+                        let state = castSpell spell state
+                        yield! fight spent state bossDamage
+                }
+        else 
+            let state = bossAttack bossDamage state
+            if state.PlayerHitPoints <= 0 then
+                Seq.singleton None
+            else
+                fight spent state bossDamage
+        
+        
                 
 
 let firstStar () =
@@ -127,23 +115,16 @@ let firstStar () =
         PlayersTurn = true
         BossHitPoints = bossHitPoints
         PlayerHitPoints = 50
-        Mana = 250
-        ShieldEffectDuration = 0
-        PoisonEffectDuration = 0
-        RechargeEffectDuration = 0
+        Mana = 500
+        ActiveSpells = Seq.empty
     }
-    
-    let p =
-        let config : Algorithm.Config<_> =
-        {
-            heuristic = fun state -> state.Mana
-            neighbours = nextPossibleStates
-            distance = fun fromState toState -> fromState.Mana - toState.Mana
-            isGoal = fun state -> state.BossHitPoints <= 0
-        }
-        in config |> Algorithm.aStar initialGameState 
+    let fights = fight 0 initialGameState bossDamage
 
-    0
+    let x = fights |> List.ofSeq
+
+    fights |> Seq.choose (fun x -> x) |> Seq.min
+    
+    
 
 let secondStar () = 
     
@@ -155,7 +136,7 @@ module Tests =
 
     [<Fact>]
     let ``first star`` () =
-        Assert.Equal(-1, firstStar())
+        Assert.Equal(1824, firstStar())
 
     [<Fact>]
     let ``second star`` () =
@@ -169,16 +150,14 @@ module Tests =
                 BossHitPoints = 13
                 PlayerHitPoints = 10
                 Mana = 250
-                ShieldEffectDuration = 0
-                PoisonEffectDuration = 0
-                RechargeEffectDuration = 0
+                ActiveSpells = Seq.empty
             }
             |> applyEffects
-            |> castPoison 
+            |> castSpell poison
             |> applyEffects 
             |> bossAttack 8
             |> applyEffects
-            |> castMagicMissile
+            |> castSpell magicMissile
             |> applyEffects
 
 
@@ -194,28 +173,26 @@ module Tests =
                 BossHitPoints = 14
                 PlayerHitPoints = 10
                 Mana = 250
-                ShieldEffectDuration = 0
-                PoisonEffectDuration = 0
-                RechargeEffectDuration = 0
+                ActiveSpells = Seq.empty
             }
             |> applyEffects
-            |> castRecharge 
+            |> castSpell recharge 
             |> applyEffects 
             |> bossAttack 8
             |> applyEffects
-            |> castShield
+            |> castSpell shield
             |> applyEffects
             |> bossAttack 8
             |> applyEffects
-            |> castDrain
+            |> castSpell drain
             |> applyEffects
             |> bossAttack 8
             |> applyEffects
-            |> castPoison
+            |> castSpell poison
             |> applyEffects
             |> bossAttack 8
             |> applyEffects
-            |> castMagicMissile
+            |> castSpell magicMissile
             |> applyEffects
 
 
