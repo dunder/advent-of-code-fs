@@ -9,6 +9,9 @@
     <Content Include="AStar\LICENSE.txt" />
     <Compile Include="AStar\PriorityQueue.fs" />
     <Compile Include="AStar\AStarAlgorithm.fs" />
+    <Content Include="BreadthFirst\LICENSE.txt" />
+    <Compile Include="BreadthFirst\Queue.fs" />
+    <Compile Include="BreadthFirst\BfsAlgorithm.fs" />
     <Compile Include="Matrix.fs" />
     <Compile Include="Combinatorics.fs" />
     <Compile Include="Cryptography.fs" />
@@ -66,6 +69,9 @@
     <Content Include="2015\Input\Day21.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="2015\Input\Day22.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Compile Include="2015\Day01.fs" />
     <Compile Include="2015\Day02.fs" />
     <Compile Include="2015\Day03.fs" />
@@ -87,6 +93,7 @@
     <Compile Include="2015\Day19.fs" />
     <Compile Include="2015\Day20.fs" />
     <Compile Include="2015\Day21.fs" />
+    <Compile Include="2015\Day22.fs" />
     <Content Include="2020\Input\Day01.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
