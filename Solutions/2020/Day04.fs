@@ -2,6 +2,7 @@
 
 open AoC
 open IO
+open ActivePatterns
 open System.Text.RegularExpressions
 
 // --- Day 4: Passport Processing ---
@@ -10,18 +11,19 @@ let input = readInputLines "2020" "Day04" |> List.ofSeq
 
 let requiredFields = ["byr";"iyr";"eyr";"hgt";"hcl";"ecl";"pid"]
 
-// active pattern, captured groups are returned in a list option
-let (|Regex|_|) pattern input = 
-    let m = Regex.Match(input, pattern)
+let parse lines =
 
-    if m.Success
-    then Some(List.tail [for g in m.Groups -> g.Value])
-    else None
-
-let (|Int|_|) (str:string) =
-    match System.Int32.TryParse str with
-    | true,int -> Some int
-    | _ -> None
+    lines
+    |> Seq.mapFold (fun acc line -> 
+       if line = "" then
+            ((-1,line), acc + 1)
+       else
+            ((acc,line), acc)
+    ) 0
+    |> fst
+    |> Seq.filter (fun (i, _) -> i <> -1)
+    |> Seq.groupBy (fun (i, _) -> i)
+    |> Seq.map (fun x -> snd x |> Seq.map snd |> String.concat " ")
 
 let toPassportFieldSet (passportData:string) =
     passportData.Split " " 
@@ -94,21 +96,6 @@ let valid2 passportFieldMap =
         | _ -> failwithf "Unmatch field: %s %s" kvp.Key kvp.Value
     )
 
-let parse lines =
-    lines
-    |> Seq.unfold (fun lines -> 
-        if lines |> Seq.length = 0 then
-            None
-        else
-            let nextPassportLines = lines |> Seq.takeWhile (fun line -> line <> "")
-            if lines |> Seq.length = (nextPassportLines |> Seq.length) then
-                Some (nextPassportLines, Seq.empty)
-            else
-                let theRest = lines |> Seq.skipWhile (fun line -> line <> "") |> Seq.tail
-                Some (nextPassportLines, theRest)
-    )
-    |> Seq.map (fun passportLines -> passportLines |> String.concat " ")
-    
 
 let firstStar () =
     parse input |> List.ofSeq

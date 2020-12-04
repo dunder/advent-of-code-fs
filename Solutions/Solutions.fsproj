@@ -12,6 +12,7 @@
     <Content Include="BreadthFirst\LICENSE.txt" />
     <Compile Include="BreadthFirst\Queue.fs" />
     <Compile Include="BreadthFirst\BfsAlgorithm.fs" />
+    <Compile Include="ActivePatterns.fs" />
     <Compile Include="Matrix.fs" />
     <Compile Include="Combinatorics.fs" />
     <Compile Include="Cryptography.fs" />
