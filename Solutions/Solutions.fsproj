@@ -76,6 +76,12 @@
     <Content Include="2015\Input\Day23.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="2015\Input\Day24.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Content Include="2015\Input\Day25.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Compile Include="2015\Day01.fs" />
     <Compile Include="2015\Day02.fs" />
     <Compile Include="2015\Day03.fs" />
@@ -99,6 +105,8 @@
     <Compile Include="2015\Day21.fs" />
     <Compile Include="2015\Day22.fs" />
     <Compile Include="2015\Day23.fs" />
+    <Compile Include="2015\Day24.fs" />
+    <Compile Include="2015\Day25.fs" />
     <Content Include="2020\Input\Day01.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
