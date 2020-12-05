@@ -49,22 +49,37 @@ let update register (transform:int->int) state =
 let check register (predicate: int->bool) state =
     predicate state.Registers.[register]
 
+let half register state = 
+    state |> (update register (fun r -> r / 2) >> jump 1)
+
+let triple register state =
+    state |> (update register ((*) 3) >> jump 1)
+
+let increment register state = 
+    state |> (update register ((+) 1) >> jump 1)
+
+let jumpEven register offset state =
+    if check register (fun r -> r % 2 = 0) state then
+        state |> jump offset
+    else
+        state |> jump 1
+
+let jumpOne register offset state =
+    if check register (fun r -> r = 1) state then
+        state |> jump offset
+    else
+        state |> jump 1
+
 let evaluate instruction (state:ExecutionState) = 
-    match instruction with 
-    | Half register -> state |> (update register (fun r -> r / 2) >> jump 1)
-    | Triple register -> state |> (update register ((*) 3) >> jump 1)
-    | Increment register -> state |> (update register ((+) 1) >> jump 1)
-    | Jump offset -> state |> jump offset
-    | JumpEven (register, offset) -> 
-        if check register (fun r -> r % 2 = 0) state then
-            state |> jump offset
-        else
-            state |> jump 1
-    | JumpOne (register, offset) -> 
-        if check register (fun r -> r = 1) state then
-            state |> jump offset
-        else
-            state |> jump 1
+    let operation = 
+        match instruction with 
+        | Half register -> half register
+        | Triple register -> triple register
+        | Increment register -> increment register
+        | Jump offset -> jump offset
+        | JumpEven (register, offset) -> jumpEven register offset
+        | JumpOne (register, offset) -> jumpOne register offset
+    state |> operation
 
 let execute registers (program:list<int*Instruction>) =
     let finalState = 
