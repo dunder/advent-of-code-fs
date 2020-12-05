@@ -151,7 +151,7 @@ module Tests =
 
     [<Fact>]
     let ``second star`` () =
-        Assert.Equal(-1, secondStar())
+        Assert.Equal(1937, secondStar())
 
     [<Fact>]
     let ``verify first example scenario`` () =
