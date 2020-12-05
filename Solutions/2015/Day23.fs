@@ -66,9 +66,9 @@ let evaluate instruction (state:ExecutionState) =
         else
             state |> jump 1
 
-let execute (program:list<int*Instruction>) =
+let execute registers (program:list<int*Instruction>) =
     let finalState = 
-        { Instruction = 0; Registers = [('a', 0);('b', 0)] |> Map.ofSeq }
+        { Instruction = 0; Registers = registers }
         |> Seq.unfold (fun state -> 
             if state.Instruction < 0 || state.Instruction >= program.Length then
                 None
@@ -83,12 +83,12 @@ let execute (program:list<int*Instruction>) =
 
 let firstStar () =
 
-    parse input |> execute
+    parse input |> execute ([('a', 0);('b', 0)] |> Map.ofSeq)
 
     
 let secondStar () = 
     
-    0
+    parse input |> execute ([('a', 1);('b', 0)] |> Map.ofSeq)
 
 
 module Tests =
@@ -101,4 +101,4 @@ module Tests =
 
     [<Fact>]
     let ``second star`` () =
-        Assert.Equal(-1, secondStar())
+        Assert.Equal(231, secondStar())
