@@ -19,10 +19,11 @@ let parse lines =
     |> fst
     |> Seq.filter (fun (i, _) -> i <> -1)
     |> Seq.groupBy (fun (i, _) -> i)
-    
+    |> Seq.map (snd >> Seq.map snd)
 
-let count line =
-    line 
+let count lines =
+    lines
+    |> String.concat ""
     |> Seq.distinct 
     |> Seq.length
 
@@ -35,13 +36,11 @@ let count2 lines =
 
 let firstStar () =
     parse input
-    |> Seq.map (fun x -> snd x |> Seq.map snd |> String.concat "")
     |> Seq.map count 
     |> Seq.reduce (+)
 
 let secondStar () = 
     parse input 
-    |> Seq.map (fun x -> snd x |> Seq.map snd)
     |> Seq.map count2
     |> Seq.reduce (+)
 
