@@ -8,7 +8,6 @@ open IO
 let input = readInputLines "2020" "Day06" |> List.ofSeq
 
 let parse lines =
-
     lines
     |> Seq.mapFold (fun acc line -> 
        if line = "" then
@@ -17,8 +16,8 @@ let parse lines =
             ((acc,line), acc)
     ) 0
     |> fst
-    |> Seq.filter (fun (i, _) -> i <> -1)
-    |> Seq.groupBy (fun (i, _) -> i)
+    |> Seq.filter (fun x -> fst x <> -1)
+    |> Seq.groupBy fst
     |> Seq.map (snd >> Seq.map snd)
 
 let count lines =
