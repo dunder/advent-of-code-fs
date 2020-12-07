@@ -63,6 +63,7 @@ let validHeight value =
         match unit with
         | "cm" -> 150 <= height && height <= 193
         | "in" -> 59 <= height && height <= 76
+        | _ -> failwithf "Unrecognized unit: %s" unit
     | _ -> false
 
 let validHairColor value = 
