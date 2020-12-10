@@ -16,8 +16,9 @@ let firstStar () =
     let preamble = numbers |> List.take preambleCount
     let code = numbers |> List.skip preambleCount
 
-    let x = List.unfold (fun (p, c) -> 
-        let sums = p |> combinations 2 |> List.map (fun cs -> (cs |> List.head) + (cs |> List.last)) |> Set.ofSeq
+    (preamble, code)
+    |> List.unfold (fun (p, c) -> 
+        let sums = p |> combinations 2 |> List.map (fun cs -> cs.[0] + cs.[1]) |> Set.ofSeq
         let x = c |> List.head
 
         if not (sums |> Set.contains x) then 
@@ -25,9 +26,11 @@ let firstStar () =
         else
             let pTail = p |> List.tail
             let cRest = c |> List.tail
-            Some ((p, c), (pTail @ [x], cRest))) (preamble, code)
-
-    x |> List.last |> snd |> List.skip 1 |> List.head
+            Some ((p, c), (pTail @ [x], cRest)))
+    |> List.last 
+    |> snd 
+    |> List.skip 1 
+    |> List.head
 
 
 let secondStar () = 
