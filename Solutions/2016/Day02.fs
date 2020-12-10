@@ -16,10 +16,23 @@ let oneMove c pos =
     | 'L' -> pos |> move Direction.West
     | c -> failwithf "Unrecognized move: %c" c
     
-let validKeyPositions = { X = 0; Y = 0; } |> adjacentAllDirections |> Set.ofSeq
+let validKeyPositions = { X = 0; Y = 0; } |> adjacentAllDirections |> Set.ofSeq |> Set.add { X = 0; Y = 0 }
 
 let isValidKeyPosition pos =
     validKeyPositions |> Set.contains pos
+
+let validBathroomKeyPositions = 
+    [
+        { X = 0; Y = 2}
+        { X = -1; Y = 1}; { X = 0; Y = 1}; { X = 1; Y = 1}
+        { X = -2; Y = 0}; { X = -1; Y = 0}; { X = 0; Y = 0}; { X = 1; Y = 0}; { X = 2; Y = 0}
+        { X = -1; Y = -1}; { X = 0; Y = -1}; { X = 1; Y = -1}
+        { X = 0; Y = -2}
+    ]
+    |> Set.ofSeq
+
+let isValidBathroomKeyPosition pos =
+    validBathroomKeyPositions |> Set.contains pos
 
 let key = function
     | { X = -1; Y = 1 } -> "1"
@@ -33,8 +46,24 @@ let key = function
     | { X = 1; Y = -1 } -> "9"
     | pos -> failwithf "Invalid key: %A" pos
 
-let evaluate line = 
-    ({ X = 0; Y = 0; }, (line: string))
+let bathRoomKey = function
+    | { X = 0; Y = 2} -> "1"
+    | { X = -1; Y = 1} -> "2"
+    | { X = 0; Y = 1} -> "3"
+    | { X = 1; Y = 1} -> "4"
+    | { X = -2; Y = 0} -> "5"
+    | { X = -1; Y = 0} -> "6"
+    | { X = 0; Y = 0} -> "7"
+    | { X = 1; Y = 0} -> "8"
+    | { X = 2; Y = 0} -> "9"
+    | { X = -1; Y = -1} -> "A"
+    | { X = 0; Y = -1} -> "B"
+    | { X = 1; Y = -1} -> "C"
+    | { X = 0; Y = -2} -> "D"
+    | pos -> failwithf "Invalid key: %A" pos
+
+let evaluate isValidKeyPosition position line = 
+    (position, (line: string))
     |> Seq.unfold (fun (pos, keySequences) -> 
         if keySequences |> Seq.isEmpty then
             None
@@ -46,19 +75,27 @@ let evaluate line =
                     tryNext
                 else 
                     pos
-            Some ((pos, keySequences), (next, keySequences.[1..]))
+            Some ((next, keySequences), (next, keySequences.[1..]))
     )
-    |> Seq.last
-    |> fst
-    |> key
+ 
+let findCode lines isValidKeyPosition keyLookup = 
+    lines 
+    |> List.scan (fun (position, keys) line -> 
+        let xs = evaluate isValidKeyPosition position line
+        let p = xs |> Seq.last |> fst
+        let k = keyLookup p
+        (p, k::keys)
+    ) ({ X = 0; Y = 0 }, [])
+    |> Seq.last 
+    |> snd
+    |> Seq.rev
+    |> System.String.Concat
 
 let firstStar () =
-    input |> Seq.map evaluate |> System.String.Concat
+    findCode input isValidKeyPosition key
     
-
-
 let secondStar () =
-    0
+    findCode input isValidBathroomKeyPosition bathRoomKey
 
 
 module Tests =
@@ -73,4 +110,4 @@ module Tests =
     [<Fact>]
     let ``second star`` () =
 
-        Assert.Equal(-1, secondStar())
+        Assert.Equal("A6B35", secondStar())
