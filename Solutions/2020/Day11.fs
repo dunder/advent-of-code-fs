@@ -18,7 +18,7 @@ let parse (lines: list<string>) : int[,] =
             let c = lines.[row].[column]
             let state = 
                 match c with 
-                | '#' -> 1
+                | '#' -> 2
                 | 'L' -> 1
                 | '.' -> 0
                 | _ -> failwithf "Unkown character '%c'" c
@@ -45,73 +45,59 @@ let countTaken (matrix:int[,]) =
     }
     |> Seq.sum
 
-let transform matrix (copy:int[,]) p = 
+let transform matrix p = 
 
-    let adjacent = adjacentAllDirections p |> Seq.filter (inMatrix matrix) |> Seq.filter (fun p -> not (isFloor matrix p))
+    let adjacent = adjacentAllDirections p |> Seq.filter (inMatrix matrix) |> Seq.filter (isFloor matrix >> not)
     
     if isAvailable matrix p then
         let allAvailable = adjacent |> Seq.forall (fun x -> isAvailable matrix x)
         if allAvailable then
-            copy.[p.Y, p.X] <- 2
+            2
+        else
+            matrix.[p.Y, p.X]
     elif isTaken matrix p then
         let taken = adjacent |> Seq.filter (fun x -> isTaken matrix x) |> Seq.length
         if taken >= 4 then
-            copy.[p.Y, p.X] <- 1
+            1
+        else
+            matrix.[p.Y, p.X]
+    else
+        matrix.[p.Y, p.X]
 
-    copy
-
-let adjacentLine (matrix:int[,]) (d:Direction) (p:Position) = 
-    let p = move d p
-    p |> List.unfold (fun state -> 
-        let outside = not (inMatrix matrix state)
-        if outside then
+let visible (matrix:int[,]) (p:Position) (d:Direction)= 
+    move d p
+    |> List.unfold (fun state -> 
+        if inMatrix matrix state |> not then
             None
         else
             let next = move d state
             Some (state, next)
     )
-    |> List.tryFind (fun x -> 
-        let pos = x
-        let result = (not (isFloor matrix x))
-        result
-    )
-    
-let transform2 matrix (copy:int[,]) p = 
+    |> List.tryFind (isFloor matrix >> not)
 
-    let n = adjacentLine matrix Direction.North p
-    let ne = adjacentLine matrix Direction.NorthEeast p
-    let e = adjacentLine matrix Direction.East p
-    let se = adjacentLine matrix Direction.SouthEast p
-    let s = adjacentLine matrix Direction.South p
-    let sw = adjacentLine matrix Direction.SouthWest p
-    let w = adjacentLine matrix Direction.West p
-    let nw = adjacentLine matrix Direction.NorthWest p
+let transformVisible matrix p = 
 
-    let adjacent = [n; ne; e; se; s; sw; w; nw] |> List.choose (id)
+    let adjacentVisible = allDirections |> Seq.map (visible matrix p) |> Seq.choose (id)
 
     if isAvailable matrix p then
-        let allAvailable = adjacent |> Seq.forall (fun x -> isAvailable matrix x)
+        let allAvailable = adjacentVisible |> Seq.forall (fun x -> isAvailable matrix x)
         if allAvailable then
-            copy.[p.Y, p.X] <- 2
+            2
+        else
+            matrix.[p.Y, p.X]
     elif isTaken matrix p then
-        let taken = adjacent |> Seq.filter (fun x -> isTaken matrix x) |> Seq.length
+        let taken = adjacentVisible |> Seq.filter (fun x -> isTaken matrix x) |> Seq.length
         if taken >= 5 then
-            copy.[p.Y, p.X] <- 1
-
-    copy
+            1
+        else
+            matrix.[p.Y, p.X]
+    else
+        matrix.[p.Y, p.X]
 
 let transformAll transform (matrix:int[,]) = 
-    let copy = Array2D.copy matrix
-    seq {
-        for y in 0..matrix.GetLength(0)-1 do
-            for x in 0..matrix.GetLength(1)-1 do
-                { X = x; Y = y }
-    }
-    |> Seq.fold (fun m p -> 
-        let x = transform matrix m p
-        x
-    ) copy
-
+    matrix
+    |> Array2D.mapi (fun y x _ -> { X = x; Y = y} |> transform matrix)
+   
 let print (matrix:int[,]) : unit =
     matrix |> Array2D.iteri (fun _ column state -> 
         let c = 
@@ -125,40 +111,24 @@ let print (matrix:int[,]) : unit =
             printfn ""
     )
 
-let firstStar () =
-    
-    let m = parse input
-    
-    m
+let seatsTakenWhenStable lines transform = 
+    parse lines
     |> Seq.unfold (fun matrix -> 
         let taken = countTaken matrix
         let mNext = matrix |> (transformAll transform)
         let takenAfter = countTaken mNext
-        print mNext
-        printfn ""
         if taken = takenAfter then
             None
         else 
             Some (mNext, mNext)
     )
     |> Seq.last |> countTaken
+
+let firstStar () =
+    seatsTakenWhenStable input transform
     
 let secondStar () = 
-
-    let m = parse input
-    m
-    |> Seq.unfold (fun matrix -> 
-        let taken = countTaken matrix
-        let mNext = matrix |> (transformAll transform2)
-        let takenAfter = countTaken mNext
-        print mNext
-        printfn ""
-        if taken = takenAfter then
-            None
-        else 
-            Some (mNext, mNext)
-    )
-    |> Seq.last |> countTaken
+    seatsTakenWhenStable input transformVisible
 
 
 module Tests =
