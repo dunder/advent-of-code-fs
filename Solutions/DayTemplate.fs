@@ -5,7 +5,7 @@ open IO
 
 // Template for new problems
 
-let input = readInputLines "20XX" "DayXX"
+let input = readInputLines "20XX" "DayXX" |> List.ofSeq
 
 
 let firstStar () =

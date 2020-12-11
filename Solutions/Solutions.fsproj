@@ -113,8 +113,12 @@
     <Content Include="2016\Input\Day02.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
+    <Content Include="2016\Input\Day03.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
     <Compile Include="2016\Day01.fs" />
     <Compile Include="2016\Day02.fs" />
+    <Compile Include="2016\Day03.fs" />
     <Content Include="2020\Input\Day01.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>

@@ -142,3 +142,4 @@ module Tests =
     [<Fact>]
     let ``second star`` () =
         Assert.Equal(2054, secondStar())
+        
