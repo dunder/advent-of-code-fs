@@ -17,7 +17,7 @@ let parseColumn (lines: list<string>) =
         let sliceColumn col = intLines |> List.map (fun line -> line.[col]) |> List.ofSeq
         [0..2]
         |> List.map sliceColumn
-    6lines 
+    lines 
         |> List.chunkBySize 3 
         |> List.map sliceColumns
     |> List.collect (id)
