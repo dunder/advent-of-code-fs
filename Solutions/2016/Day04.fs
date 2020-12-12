@@ -1,11 +1,11 @@
-﻿module AoC.E20XX.DayXX
+﻿module AoC.E2016.Day04
 
 open AoC
 open IO
 
-// Template for new problems
+// --- Day 4: Security Through Obscurity ---
 
-let input = readInputLines "20XX" "DayXX" |> List.ofSeq
+let input = readInputLines "2016" "Day04" |> List.ofSeq
 
 
 let firstStar () =
