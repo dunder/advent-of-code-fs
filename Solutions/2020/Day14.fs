@@ -9,8 +9,8 @@ open System.Text.RegularExpressions
 
 let input = readInputLines "2020" "Day14" |> List.ofSeq
 
-type Instruction = { address: int64; value: int64 }
-type Program = { bitmask: string; instructions: list<Instruction> }
+type MemoryUpdate = { address: int64; value: int64 }
+type Instruction = { bitmask: string; instructions: list<MemoryUpdate> }
 
 let parse (lines: list<string>) = 
     
@@ -24,14 +24,14 @@ let parse (lines: list<string>) =
     |> fst
     |> List.groupBy (fun (i, _) -> i)
 
-let toInstruction (instruction: string) =
+let toMemoryUpdate (memoryUpdateDescription: string) =
     let regex = new Regex("mem\[(\d+)\] = (.+)")
-    let m = regex.Match(instruction)
+    let m = regex.Match(memoryUpdateDescription)
     let address = m.Groups.[1].Value |> int64
     let value = m.Groups.[2].Value |> int64
     { address = address; value = value  }
 
-let toProgram (instructionGroups: list<list<string>>) =
+let toInstruction (instructionGroups: list<list<string>>) =
     instructionGroups
     |> List.map (fun instructionGroup ->
         let maskLine = instructionGroup |> List.head
@@ -40,7 +40,7 @@ let toProgram (instructionGroups: list<list<string>>) =
         let instructions = 
             instructionGroup 
             |> List.tail
-            |> List.map toInstruction
+            |> List.map toMemoryUpdate
 
         { bitmask = mask; instructions = instructions }
     )
@@ -74,33 +74,34 @@ let generateAddresses (mask: string) (address: int64) =
         Convert.ToString(result, 2).PadLeft(36, '0')
         |> String.mapi (fun i c -> if mask.[i] = 'X' then 'X' else c)
 
-    let idxs = mask |> Seq.mapi (fun i c -> i, c) |> Seq.filter (fun (i,c) -> c = 'X') |> Seq.map fst
-    let xs = idxs |> Seq.length
-    let times = xs |> float
+    let idxs = mask |> Seq.mapi (fun i c -> i, c) |> Seq.filter (fun (_, c) -> c = 'X') |> Seq.map fst
+    let floatingCount = idxs |> Seq.length
+    let times = floatingCount |> float
+    let binaryCombinations = (2.0**times |> int)-1
 
-    let y = [0..(2.0**times |> int)-1] |> List.map (fun x -> Convert.ToString(x, 2).PadLeft(xs, '0'))
-
-    y
-    |> List.map (fun binary -> 
-        let z = binary |> Seq.zip idxs |> Map.ofSeq
-        modifiedMask |> String.mapi (fun i c -> 
+    let applyMask mask idxs binaryCombination = 
+        let floatingIndexLookup = binaryCombination |> Seq.zip idxs |> Map.ofSeq
+        mask |> String.mapi (fun i c -> 
             if c = 'X' then 
-                z.[i]
+                floatingIndexLookup.[i]
             else
                 c
         )
-    )
+
+    [0..binaryCombinations] 
+    |> List.map (fun x -> Convert.ToString(x, 2).PadLeft(floatingCount, '0'))
+    |> List.map (applyMask modifiedMask idxs)
     |> List.ofSeq
     |> List.map (fun binary -> Convert.ToInt64(binary, 2))
 
-let evaluate (program: Program) (state: Map<int64, int64>) =
+let evaluate (program: Instruction) (state: Map<int64, int64>) =
     program.instructions
     |> List.fold (fun (map: Map<int64, int64>) instruction -> 
         let value = set program.bitmask instruction.value
         map |> Map.add instruction.address value
     ) state
 
-let evaluate2 (program: Program) (state: Map<int64, int64>) =
+let evaluate2 (program: Instruction) (state: Map<int64, int64>) =
     program.instructions
     |> List.fold (fun (map: Map<int64, int64>) instruction -> 
         let addresses = generateAddresses program.bitmask instruction.address
@@ -110,47 +111,31 @@ let evaluate2 (program: Program) (state: Map<int64, int64>) =
             ) map
     ) state
 
+let run program instructionEvaluator =
+
+    let memory = 
+        parse program 
+        |> List.map snd
+        |> List.map (fun x -> x |> List.map snd)
+        |> toInstruction
+        |> Seq.fold (fun (state: Map<int64,int64>) program -> 
+            instructionEvaluator program state
+        ) Map.empty
+
+    let result =
+        memory 
+        |> List.ofSeq
+        |> List.sumBy (fun x -> x.Value)
+
+    result
 
 let firstStar () =
 
-    let x = 
-        parse input 
-        |> List.map snd
-        |> List.map (fun x -> x |> List.map snd)
-        |> toProgram
-
-    let memory = 
-        x
-        |> Seq.fold (fun (state: Map<int64,int64>) program -> 
-            evaluate program state
-        ) Map.empty
-    
-    let result =
-        memory 
-        |> List.ofSeq
-        |> List.sumBy (fun x -> x.Value)
-
-    result
+    run input evaluate
 
 let secondStar () = 
-    let x = 
-        parse input 
-        |> List.map snd
-        |> List.map (fun x -> x |> List.map snd)
-        |> toProgram
-
-    let memory = 
-        x
-        |> Seq.fold (fun (state: Map<int64,int64>) program -> 
-            evaluate2 program state
-        ) Map.empty
-
-    let result =
-        memory 
-        |> List.ofSeq
-        |> List.sumBy (fun x -> x.Value)
-
-    result
+    
+    run input evaluate2
 
 
 module Tests =
