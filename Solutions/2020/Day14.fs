@@ -10,10 +10,9 @@ open System.Text.RegularExpressions
 let input = readInputLines "2020" "Day14" |> List.ofSeq
 
 type MemoryUpdate = { address: int64; value: int64 }
-type Instruction = { bitmask: string; instructions: list<MemoryUpdate> }
+type InstructionSet = { bitmask: string; instructions: list<MemoryUpdate> }
 
 let parse (lines: list<string>) = 
-    
     lines
     |> List.mapFold (fun acc line -> 
        if line.StartsWith("mask") then
@@ -23,6 +22,8 @@ let parse (lines: list<string>) =
     ) 0
     |> fst
     |> List.groupBy (fun (i, _) -> i)
+    |> List.map snd
+    |> List.map (fun x -> x |> List.map snd)
 
 let toMemoryUpdate (memoryUpdateDescription: string) =
     let regex = new Regex("mem\[(\d+)\] = (.+)")
@@ -51,18 +52,19 @@ let maskToSet (mask: string) =
 let maskToClear (mask: string) = 
     mask.Replace("X", "1")
 
-let set (mask: string) (value: int64) =
+let memoryWrite (memoryUpdate: MemoryUpdate) (mask: string) (memory: Map<int64, int64>) =
+
     let maskForSet = maskToSet mask 
     let maskValue = Convert.ToInt64(maskForSet, 2)
-    
-    let result = maskValue ||| value
+
+    let result = maskValue ||| memoryUpdate.value
 
     let maskForClear = maskToClear mask
     let maskValueForClear = Convert.ToInt64(maskForClear, 2)
 
     let next = maskValueForClear &&& result
 
-    next
+    memory |> Map.add memoryUpdate.address next
 
 let generateAddresses (mask: string) (address: int64) =
     let maskForSet = maskToSet mask 
@@ -94,32 +96,26 @@ let generateAddresses (mask: string) (address: int64) =
     |> List.ofSeq
     |> List.map (fun binary -> Convert.ToInt64(binary, 2))
 
-let evaluate (program: Instruction) (state: Map<int64, int64>) =
-    program.instructions
-    |> List.fold (fun (map: Map<int64, int64>) instruction -> 
-        let value = set program.bitmask instruction.value
-        map |> Map.add instruction.address value
-    ) state
+let memoryFloatWrite (memoryUpdate: MemoryUpdate) (mask: string) (memory: Map<int64, int64>) =
 
-let evaluate2 (program: Instruction) (state: Map<int64, int64>) =
-    program.instructions
-    |> List.fold (fun (map: Map<int64, int64>) instruction -> 
-        let addresses = generateAddresses program.bitmask instruction.address
-        addresses
-            |> List.fold(fun m address -> 
-                m |> Map.add address instruction.value
-            ) map
-    ) state
+    generateAddresses mask memoryUpdate.address
+    |> List.fold(fun m address -> 
+        m |> Map.add address memoryUpdate.value
+    ) memory
 
-let run program instructionEvaluator =
+let run program memoryWriter =
+
+    let evaluate (program: InstructionSet) (state: Map<int64, int64>) memoryWriter =
+        program.instructions
+        |> List.fold (fun (map: Map<int64, int64>) memoryUpdate -> 
+            map |> memoryWriter memoryUpdate program.bitmask
+        ) state
 
     let memory = 
         parse program 
-        |> List.map snd
-        |> List.map (fun x -> x |> List.map snd)
         |> toInstruction
         |> Seq.fold (fun (state: Map<int64,int64>) program -> 
-            instructionEvaluator program state
+            evaluate program state memoryWriter
         ) Map.empty
 
     let result =
@@ -131,11 +127,11 @@ let run program instructionEvaluator =
 
 let firstStar () =
 
-    run input evaluate
+    run input memoryWrite
 
 let secondStar () = 
     
-    run input evaluate2
+    run input memoryFloatWrite
 
 
 module Tests =
