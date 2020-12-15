@@ -22,8 +22,7 @@ let parse (lines: list<string>) =
     ) 0
     |> fst
     |> List.groupBy (fun (i, _) -> i)
-    |> List.map snd
-    |> List.map (fun x -> x |> List.map snd)
+    |> List.map (snd >> (List.map snd))
 
 let toMemoryUpdate (memoryUpdateDescription: string) =
     let regex = new Regex("mem\[(\d+)\] = (.+)")
@@ -32,20 +31,17 @@ let toMemoryUpdate (memoryUpdateDescription: string) =
     let value = m.Groups.[2].Value |> int64
     { address = address; value = value  }
 
-let toInstruction (instructionGroups: list<list<string>>) =
-    instructionGroups
-    |> List.map (fun instructionGroup ->
-        let maskLine = instructionGroup |> List.head
-        let mask = maskLine.Split(" = ") |> Array.last
+let toInstruction (instructionGroup: list<string>) =
+    let maskLine = instructionGroup |> List.head
+    let mask = maskLine.Split(" = ") |> Array.last
 
-        let instructions = 
-            instructionGroup 
-            |> List.tail
-            |> List.map toMemoryUpdate
+    let instructions = 
+        instructionGroup 
+        |> List.tail
+        |> List.map toMemoryUpdate
 
-        { bitmask = mask; instructions = instructions }
-    )
-    
+    { bitmask = mask; instructions = instructions }
+   
 let maskToSet (mask: string) =
     mask.Replace("X", "0")
 
@@ -113,7 +109,7 @@ let run program memoryWriter =
 
     let memory = 
         parse program 
-        |> toInstruction
+        |> Seq.map toInstruction
         |> Seq.fold (fun (state: Map<int64,int64>) program -> 
             evaluate program state memoryWriter
         ) Map.empty
