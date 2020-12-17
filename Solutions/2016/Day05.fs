@@ -49,7 +49,8 @@ let password2 (input: string) =
             let next = 
                 if System.Char.IsDigit(currentCharIdx) then
                     let num = currentCharIdx |> string |> int
-                    if num < 8 then
+                    let notFoundYet = not <| (pw |> Seq.exists (fun (i, _) -> i = num))
+                    if num < 8 && notFoundYet then
                         (num, currentChar)::pw
                     else
                         pw
@@ -70,7 +71,7 @@ let firstStar () =
     password input
 
 let secondStar () = 
-    ""
+    password2 input
 
 
 module Tests =
