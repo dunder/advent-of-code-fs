@@ -55,33 +55,15 @@ module Cube3D =
                 
         cube
 
-    let xmin (cube: Cube3D) = cube |> Seq.map (fun p -> p.X) |> Seq.min
-    let xmax (cube: Cube3D) = cube |> Seq.map (fun p -> p.X) |> Seq.max
-
-    let ymin (cube: Cube3D) = cube |> Seq.map (fun p -> p.Y) |> Seq.min
-    let ymax (cube: Cube3D) = cube |> Seq.map (fun p -> p.Y) |> Seq.max
-
-    let zmin (cube: Cube3D) = cube |> Seq.map (fun p -> p.Z) |> Seq.min
-    let zmax (cube: Cube3D) = cube |> Seq.map (fun p -> p.Z) |> Seq.max
-
-    let bounds (cube: Cube3D) = (xmin cube, xmax cube), (ymin cube, ymax cube), (zmin cube, zmax cube)
-
     let activate p (cube: Cube3D) = cube |> Set.add p
     let inactivate p (cube: Cube3D) = cube |> Set.remove p
 
     let active p (cube: Cube3D) = cube |> Set.contains p
 
     let space (cube: Cube3D) = 
-        [
-            let (xmin, xmax), (ymin, ymax),(zmin, zmax) = bounds cube
-
-            for z in zmin..zmax do
-                for y in ymin..ymax do
-                    for x in xmin..xmax do
-                        let p = { X = x; Y = y; Z = z }
-                        yield p
-                        yield! p |> Point3D.neighbors
-        ]
+        cube 
+        |> Seq.collect (fun p -> p |> Point3D.neighbors)
+        |> Seq.append cube
 
     let activeNeighbors p (cube: Cube3D) = Point3D.neighbors p |> Seq.filter (fun n -> cube |> active n)
 
@@ -115,8 +97,6 @@ module Cube3D =
             cube |> oneCycle
         ) cube
 
-
-
 module Cube4D =
     
     let parse (lines: list<string>) = 
@@ -134,37 +114,15 @@ module Cube4D =
                 
         cube
 
-    let xmin (cube: Cube4D) = cube |> Seq.map (fun p -> p.X) |> Seq.min
-    let xmax (cube: Cube4D) = cube |> Seq.map (fun p -> p.X) |> Seq.max
-
-    let ymin (cube: Cube4D) = cube |> Seq.map (fun p -> p.Y) |> Seq.min
-    let ymax (cube: Cube4D) = cube |> Seq.map (fun p -> p.Y) |> Seq.max
-
-    let zmin (cube: Cube4D) = cube |> Seq.map (fun p -> p.Z) |> Seq.min
-    let zmax (cube: Cube4D) = cube |> Seq.map (fun p -> p.Z) |> Seq.max
-
-    let wmin (cube: Cube4D) = cube |> Seq.map (fun p -> p.W) |> Seq.min
-    let wmax (cube: Cube4D) = cube |> Seq.map (fun p -> p.W) |> Seq.max
-
-    let bounds (cube: Cube4D) = (xmin cube, xmax cube), (ymin cube, ymax cube), (zmin cube, zmax cube), (wmin cube, wmax cube)
-
     let activate p (cube: Cube4D) = cube |> Set.add p
     let inactivate p (cube: Cube4D) = cube |> Set.remove p
 
     let active p (cube: Cube4D) = cube |> Set.contains p
 
     let space (cube: Cube4D) = 
-        [
-            let (xmin, xmax), (ymin, ymax), (zmin, zmax), (wmin, wmax) = bounds cube
-
-            for w in wmin..wmax do
-                for z in zmin..zmax do
-                    for y in ymin..ymax do
-                        for x in xmin..xmax do
-                            let p = { X = x; Y = y; Z = z; W = w}
-                            yield p
-                            yield! p |> Point4D.neighbors
-        ]
+        cube 
+        |> Seq.collect (fun p -> p |> Point4D.neighbors)
+        |> Seq.append cube
 
     let neighborLookup (cube: Cube4D) = 
         cube 
