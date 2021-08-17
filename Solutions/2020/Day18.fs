@@ -11,11 +11,12 @@ type Operator =
     | Addition
     | Multiplication
 
-type Input = 
+type InputType = 
     | Number of System.Int64
     | Operator of Operator
     | ScopeStart
     | ScopeEnd
+    | Terminator
 
 type Operand =
     | Number of System.Int64
@@ -69,54 +70,59 @@ module EvaluationState =
         | Number(right)::Scope::tail -> { state with Operands = Number(right)::tail }
         | _ -> failwithf "Unexpected state: %O" state
 
-let (|BigInt|_|) (char: char) = 
+let (|Int64|_|) char = 
     match System.Int64.TryParse (char.ToString()) with
     | (true, int) -> Some(int)
     | _ -> None
 
-let classify c : Input =
+let classify c : InputType =
     match c with
-    | BigInt(int) -> Input.Number(int)
+    | Int64 int -> InputType.Number(int)
     | c when c = '(' -> ScopeStart
     | c when c = ')' -> ScopeEnd
     | c -> Operator((Operator.fromChar c))
 
-let evaluate (state: EvaluationState) (input: Input) = 
+let evaluate (state: EvaluationState) (input: InputType, next: InputType) = 
     match input with
-    | Input.Number(number) -> state |> EvaluationState.number number
+    | InputType.Number(number) -> state |> EvaluationState.number number
     | Operator(operator) -> state |> EvaluationState.operator operator
     | ScopeStart -> state |> EvaluationState.openScope
     | ScopeEnd -> state |> EvaluationState.closeScope
+    | Terminator -> state
 
-let parse input = 
-    input
-    |> Seq.filter (System.Char.IsWhiteSpace >> not)
-    |> Seq.map classify
-    |> Seq.fold evaluate { Operands = []; Operators = []}
+let run input = 
+    let classified = 
+        input
+        |> Seq.filter (System.Char.IsWhiteSpace >> not)
+        |> Seq.map classify
+       
+    [Terminator]
+    |> Seq.append classified
+    |> Seq.pairwise
+    |> Seq.fold evaluate { Operands = []; Operators = [] }
     |> EvaluationState.result
 
 let runAll (input:string list) =
     input
-    |> Seq.map parse
-    |> Seq.sum
+    |> Seq.sumBy run
 
 let example1 () =
-    parse "1 + 2 * 3 + 4 * 5 + 6"
+    run "1 + 2 * 3 + 4 * 5 + 6"
 
 let example2 () =
-    parse "1 + (2 * 3) + (4 * (5 + 6))"
+    run "1 + (2 * 3) + (4 * (5 + 6))"
 
 let example3 () =
-    parse "2 * 3 + (4 * 5)"
+    run "2 * 3 + (4 * 5)"
 
 let example4 () =
-    parse "5 + (8 * 3 + 9 + 3 * 4 * 3)"
+    run "5 + (8 * 3 + 9 + 3 * 4 * 3)"
 
 let example5 () =
-    parse "5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))"
+    run "5 * 9 * (7 * 3 * 3 + 9 * 3 + (8 + 6 * 4))"
 
 let example6 () =
-    parse "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"
+    run "((2 + 4 * 9) * (6 + 9 * 8 + 6) + 6) + 2 + 4 * 2"
 
 let firstStar () =
     runAll input

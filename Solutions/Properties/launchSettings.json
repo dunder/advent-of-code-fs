@@ -2,7 +2,7 @@
   "profiles": {
     "Solutions": {
       "commandName": "Project",
-      "commandLineArgs": "new -e 2016 -d 6"
+      "commandLineArgs": "run -e 2020 -d 18 -x 1"
     }
   }
 }

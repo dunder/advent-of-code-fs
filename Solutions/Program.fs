@@ -5,6 +5,7 @@ open System.IO
 open System.Reflection
 open System.Xml.Linq
 
+// https://github.com/commandlineparser/commandline
 
 [<Verb("new", HelpText = "Create files for a new day")>]
 type NewOptions = {
@@ -20,6 +21,7 @@ type RunOptions = {
     [<Option('d', "day", Required = true, HelpText = "A day (such as 1, 2 etc)")>] Day : int
     [<Option('f', "first", Required = false, HelpText = "Run first star")>] First : bool
     [<Option('s', "second", Required = false, HelpText = "Run second star")>] Second : bool
+    [<Option('x', "example", Required = false, HelpText = "Run example n (where n is 1, 2 etc)")>] Example : int option
 }
 
 let callFunction (event: int) (day: int) (name: string) = 
@@ -91,6 +93,15 @@ let runAocDay (opts: RunOptions) =
         let result = callFunction opts.Event opts.Day "secondStar"
         printByType ("Second star:", result)
         printfn "\n"
+   
+    match opts.Example with
+    | Some(nr) -> 
+        let example = sprintf "example%i" nr
+        let result = callFunction opts.Event opts.Day example
+        printByType (sprintf "Example %i:" nr, result)
+        printfn "\n"
+    | None -> ()
+
     0
 
 [<EntryPoint>]
