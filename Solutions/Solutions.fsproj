@@ -227,6 +227,10 @@
     <Compile Include="2020\Day23.fs" />
     <Compile Include="2020\Day24.fs" />
     <Compile Include="2020\Day25.fs" />
+    <Content Include="2021\Input\Day01.txt">
+      <CopyToOutputDirectory>Always</CopyToOutputDirectory>
+    </Content>
+    <Compile Include="2021\Day01.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
