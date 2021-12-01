@@ -3,28 +3,22 @@ module AoC.E2021.Day01
 open AoC
 open IO
 
-// Template for new problems
+// --- Day 1: Sonar Sweep ---
 
-let input = readInputLines "2021" "Day01" |> List.ofSeq
-
+let input = readInputLines "2021" "Day01"
 
 let firstStar () =
-    0
+    input
+    |> Seq.map System.Int32.Parse
+    |> Seq.pairwise
+    |> Seq.filter (fun (d1, d2) -> d2 > d1)
+    |> Seq.length
 
 let secondStar () = 
-    0
-
-
-module Tests =
-
-    open Xunit
-
-    [<Fact>]
-    let ``first star`` () =
-
-        Assert.Equal(-1, firstStar())
-
-    [<Fact>]
-    let ``second star`` () =
-
-        Assert.Equal(-1, secondStar())
+    input
+    |> Seq.map System.Int32.Parse
+    |> Seq.windowed 3
+    |> Seq.map Seq.sum
+    |> Seq.pairwise
+    |> Seq.filter (fun (d1, d2) -> d2 > d1)
+    |> Seq.length
