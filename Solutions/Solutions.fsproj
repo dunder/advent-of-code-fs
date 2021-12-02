@@ -231,6 +231,7 @@
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
     <Compile Include="2021\Day01.fs" />
+    <Compile Include="2021\Day02.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
