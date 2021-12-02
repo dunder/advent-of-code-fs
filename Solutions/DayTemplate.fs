@@ -1,9 +1,10 @@
 ﻿module AoC.E20XX.DayXX
 
+// >>> insert day tagline here <<<
+
 open AoC
 open IO
 
-// Template for new problems
 
 let input = readInputLines "20XX" "DayXX" |> List.ofSeq
 
@@ -13,18 +14,3 @@ let firstStar () =
 
 let secondStar () = 
     0
-
-
-module Tests =
-
-    open Xunit
-
-    [<Fact>]
-    let ``first star`` () =
-
-        Assert.Equal(-1, firstStar())
-
-    [<Fact>]
-    let ``second star`` () =
-
-        Assert.Equal(-1, secondStar())
