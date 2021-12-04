@@ -44,6 +44,7 @@ let newAocDay (opts: NewOptions) =
     let eventDirectory = Path.Combine(__SOURCE_DIRECTORY__, sprintf "%i" opts.Event)
     let inputDirectory = Path.Combine(eventDirectory, "Input")
     let dayFile = Path.Combine(eventDirectory, sprintf "Day%02i.fs" opts.Day)
+    let dayScriptFile = Path.Combine(eventDirectory, sprintf "Day%02i.fsx" opts.Day)
 
     if not <| Directory.Exists(eventDirectory) then
         printfn "This is a new event, creating new directories ..."
@@ -73,15 +74,34 @@ let newAocDay (opts: NewOptions) =
             File.WriteAllText(inputFile, "")
         printfn "Created the input file: %s" inputFile
 
-        let projectFile = XDocument.Load(Path.Combine(__SOURCE_DIRECTORY__, "Solutions.fsproj"))
+        // write code to add newly added file to solution:
 
-        let root = projectFile.Root.Elements
+        // let projectFile = XDocument.Load(Path.Combine(__SOURCE_DIRECTORY__, "Solutions.fsproj"))
 
-
-        0
+        // let root = projectFile.Root.Elements 
+        
     else
         printfn "The file '%s' already exists." dayFile
-        1
+    
+    if not <| File.Exists(dayScriptFile) then
+        let templateFile = Path.Combine(__SOURCE_DIRECTORY__, "DayTemplate.fsx")
+        let template = File.ReadAllText(templateFile)
+        let content = template.Replace("DayXX", sprintf "Day%02i" opts.Day)
+        
+        if not <| opts.WhatIf then
+            File.WriteAllText(dayScriptFile, content)
+        printfn "Created the solution script file: %s" dayScriptFile
+
+        // write code to add newly added file to solution:
+
+        // let projectFile = XDocument.Load(Path.Combine(__SOURCE_DIRECTORY__, "Solutions.fsproj"))
+
+        // let root = projectFile.Root.Elements 
+        
+    else
+        printfn "The file '%s' already exists." dayFile
+
+    0
 
 let runAocDay (opts: RunOptions) = 
     

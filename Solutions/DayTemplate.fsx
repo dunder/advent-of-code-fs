@@ -6,8 +6,13 @@ System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 
 let input = File.ReadLines(@".\Input\DayXX.txt") |> List.ofSeq
 
-let firstStar () =
+let firstStar =
     0
 
-let secondStar () = 
+firstStar
+
+let secondStar = 
     0
+
+secondStar
+
