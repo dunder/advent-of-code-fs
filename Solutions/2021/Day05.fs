@@ -25,7 +25,7 @@ let swap pair =
     let first, second = pair
     second, first
 
-let sortLowestXFirst points =
+let sortByX points =
     let start, stop = points
     let (x1, _), (x2, _) = start, stop
     if x1 > x2 then
@@ -33,7 +33,7 @@ let sortLowestXFirst points =
     else
         points
 
-let sortLowestYFirst points =
+let sortByY points =
     let start, stop = points
     let (_, y1), (_, y2) = start, stop
     if y1 > y2 then
@@ -57,81 +57,39 @@ let isDiagonal points =
 
 let isDiagonalPositive points =
     if isDiagonal points then
-        let start, stop = sortLowestXFirst points
+        let start, stop = sortByX points
         let (_, y1), (_, y2) = start, stop
         y2 > y1
     else
         false
 
-let isDiagonalNegative (points:(int*int)*(int*int)) =
-    isDiagonal points && not (isDiagonalPositive points)
+let isDiagonalNegative points = isDiagonal points && not (isDiagonalPositive points)
     
-let isStraightOrDiagonal points = points |> isStraightLine || points |> isDiagonal
-
-let sortPoints points = 
-    let start, stop = points
-    let (x1, y1), (x2, y2) = start, stop
-
-    if isDiagonalPositive points || isDiagonalNegative points then
-        if x1 > x2 then
-            stop, start
-        else 
-            points
-    else if x1 = x2 then
-        if y1 > y2 then
-            (stop, start)
-        else 
-            points
-    else if y1 = y2 then
-        if x1 > x2 then
-            stop, start
-        else 
-            points
-    else
-        points
-
-let points points =
-    let (x1, y1), (x2, y2) = points
-
-    if x1 = x2 then
-        seq {            
-            for y in y1..y2 do
-                yield x1, y
-        }
-    else if y1 = y2 then
-
-        seq {
-            for x in x1..x2 do
-                yield x, y1
-        }
-    else 
-        failwithf "not a straight line"
-    |> Seq.toList
+let isStraightOrDiagonal points = isStraightLine points || isDiagonal points
 
 let isMany (point, count) = count > 1
 
-
-let points2 points =    
+let points points =
     if isDiagonalPositive points then
-        let (x1, y1), (x2, y2) = sortLowestXFirst points
+        let (x1, y1), (x2, y2) = sortByX points
         seq {
             for x in x1..x2 do
                 yield x, y1 + (x - x1)
         }
     else if isDiagonalNegative points then
-        let (x1, y1), (x2, _) = sortLowestXFirst points
+        let (x1, y1), (x2, _) = sortByX points
         seq {
             for x in x1..x2 do
                 yield x, y1 - (x - x1)
         }
     else if isVerticalLine points then
-        let (x1, y1), (_, y2) = sortLowestYFirst points
+        let (x1, y1), (_, y2) = sortByY points
         seq {            
             for y in y1..y2 do
                 yield x1, y
         }
     else if isHorizontalLine points then
-        let (x1, y1), (x2, _) = sortLowestXFirst points
+        let (x1, y1), (x2, _) = sortByX points
         seq {
             for x in x1..x2 do
                 yield x, y1
@@ -156,14 +114,12 @@ let print (points:((int*int)*int) seq) =
    
 let firstStar () =
     let lines = parse input
-    let answer = 
-        lines 
-        |> Seq.filter isStraightLine 
-        |> Seq.map sortPoints
+    let answer =
+        lines
+        |> Seq.filter isStraightLine
         |> Seq.map points 
         |> Seq.collect id
         |> Seq.countBy id
-        |> Seq.toList
         |> Seq.filter isMany
         |> Seq.length
     answer
@@ -171,14 +127,13 @@ let firstStar () =
 let secondStar () = 
     let lines = parse input
 
-    let answer = 
-        lines 
-        |> Seq.filter isStraightOrDiagonal     
-        |> Seq.map points2 
+    let answer =
+        lines
+        |> Seq.filter isStraightOrDiagonal
+        |> Seq.map points
         |> Seq.collect id
         |> Seq.countBy id
         |> Seq.filter isMany
-        |> Seq.toList
         |> Seq.length
 
     answer
