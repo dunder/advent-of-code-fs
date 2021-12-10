@@ -67,8 +67,7 @@ let firstStar () =
     |> List.choose id
     |> List.map snd
     |> List.choose id
-    |> List.map fst 
-    |> List.map score
+    |> List.map (fst >> score)
     |> Seq.sum
 
 let autocompleteScore c = 
@@ -86,16 +85,17 @@ let totalAutocompleteScore chars =
         state * 5L + score
     ) 0L
 
+let incomplete (line: string) =
+    let result = corrupted line 
+    match result with 
+    | Some _ -> false
+    | None -> true
+
 
 let secondStar () =
     let scores = 
         input
-        |> List.filter (fun line -> 
-            let result = corrupted line 
-            match result with 
-            | Some _ -> false
-            | None -> true
-        )
+        |> List.filter incomplete
         |> List.map (parse >> Seq.last >> fst)
         |> List.map totalAutocompleteScore
         |> List.sort
