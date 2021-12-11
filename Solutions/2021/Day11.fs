@@ -120,20 +120,27 @@ let isSynchronizedFlash energyMap =
     |> allElements
     |> Seq.forall (fun (p, (energy, flashed)) -> flashed)
 
+let allValues (a:'a[,]) =
+    seq { 
+        for row in 0 .. a.GetLength(0)-1 do
+          for column in 0 .. a.GetLength(1)-1 do 
+            yield a.[row,column] 
+    }
+
+let isEndState energyMap =
+    energyMap
+    |> allValues
+    |> Seq.forall (fun (value, flashed) -> value = 0)
+
+let unfoldNextStep state = 
+    let energyMap, stepNr = state
+    let nextFlashState = energyMap |> step
+    Some (state, (nextFlashState |> resetEnergyLevel, stepNr + 1))
 
 let secondStar () = 
     let step0 = parse input
-    let synchronizedAt =
-        Seq.unfold (fun state -> 
-            let energyMap, stepNr = state
-            let nextFlashState = energyMap |> step
-
-            if isSynchronizedFlash nextFlashState then
-                None
-            else
-                Some (state, (nextFlashState |> resetEnergyLevel, stepNr + 1))
-        ) (step0, 0)
-        |> Seq.last
-        |> snd
-
-    synchronizedAt + 2
+    let endStep =
+        Seq.unfold unfoldNextStep (step0, 0)
+        |> Seq.find (fun (energyMap, step) -> isEndState energyMap)
+    let _, stepNr = endStep
+    stepNr
