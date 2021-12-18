@@ -54,7 +54,7 @@ module TargetArea =
                     Some ((x1, x, vx), (x1, x', vx'))
                 else 
                     None
-            ) (20, 0, 0)
+            ) (x1, 0, 0)
             |> Seq.last
         
         // do not overshoot on first step
