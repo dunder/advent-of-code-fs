@@ -1,6 +1,6 @@
 module AoC.E2021.Day07
 
-// >>> insert day tagline here <<<
+// --- Day 7: The Treachery of Whales ---
 
 open AoC
 open IO

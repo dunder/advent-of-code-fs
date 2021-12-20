@@ -1,6 +1,6 @@
 module AoC.E2021.Day14
 
-// >>> insert day tagline here <<<
+// --- Day 14: Extended Polymerization ---
 
 open AoC
 open IO

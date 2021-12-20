@@ -1,4 +1,4 @@
-// >>> insert day tagline here <<<
+// --- Day 15: Chiton ---
 
 open System.IO
 
@@ -19,29 +19,6 @@ let example = [
     "2311944581"
 ]
 
-type Queue<'a> =
-    | Queue of 'a list * 'a list
-
-module Queue =
-    let empty = Queue([], [])
-
-    let enqueue e q = 
-        match q with
-        | Queue(fs, bs) -> Queue(e :: fs, bs)
-
-    let dequeue q = 
-        match q with
-        | Queue([], []) -> failwith "Empty queue!"
-        | Queue(fs, b :: bs) -> b, Queue(fs, bs)
-        | Queue(fs, []) -> 
-            let bs = List.rev fs
-            bs.Head, Queue([], bs.Tail)
-
-    let isEmpty q = 
-        function
-        | Queue([], []) -> true
-        | _ -> false
-
 let allElements (a:'a[,]) =
     seq { 
         for row in 0 .. a.GetLength(0)-1 do
@@ -50,6 +27,7 @@ let allElements (a:'a[,]) =
     }
 
 let allValues (a:'a[,]) = a |>allElements |> Seq.map snd
+let allPositions (a:'a[,]) = a |>allElements |> Seq.map fst
 
 let parse (lines: string list) =
     let rows = lines |> Seq.length
@@ -83,166 +61,138 @@ let adjacent (a:'a[,]) p =
     }
 
 
-type Score = int
+type SolverState = { Current: int*int; Vertices: Set<int*int>; Dist: Map<int*int, int>; Prev: Map<int*int, option<int*int>> }
 
-// poor-mans priority queue
-// via Sets
-type Priority<'node when 'node : comparison> =
-    { 
-        nMap : Map<Score, Set<'node>>
-        pMap : Map<'node, Score>
-    }
+module SolverState = 
 
-module Priority =
+    let init (matrix: int[,]) current =
 
-    let empty()  : Priority<'node> =
-        {
-            nMap = Map.empty
-            pMap = Map.empty
-        }
+            let vertices = matrix |> allPositions |> Set.ofSeq
+            let dist = matrix |> allPositions |> Seq.map (fun pos -> pos, System.Int32.MaxValue) |> Map.ofSeq
+            let dist = dist |> Map.add current 0
+            let prev = matrix |> allPositions |> Seq.map (fun pos -> pos, None) |> Map.ofSeq
 
-    let mininmum (pq : Priority<'node>) =
-        pq.nMap
-        |> Map.pick (fun _ ns -> Some (Seq.head ns))
+            { Current = current; Vertices = vertices; Dist = dist; Prev = prev }
 
-    let insert (n : 'node) (p : Score) (pq : Priority<'node>) =
-        let nMap' =
-            let lp = defaultArg (Map.tryFind p pq.nMap) Set.empty
-            let lp' = Set.add n lp
-            Map.add p lp' pq.nMap
-        let pMap' =
-            Map.add n p pq.pMap
-        { nMap = nMap'; pMap = pMap' }
+let djikstra (matrix:int[,]) source target =
 
-    let remove (n : 'node) (pq : Priority<'node>) =
-        match pq.pMap.TryFind n with
-        | None -> pq
-        | Some p ->
-            let nMap' =
-                let lp = defaultArg (Map.tryFind p pq.nMap) Set.empty
-                let lp' = Set.remove n lp
-                if Set.isEmpty lp' then
-                    Map.remove p pq.nMap
+//  1  function Dijkstra(Graph, source):
+//  2
+//  3      create vertex set Q
+//  4
+//  5      for each vertex v in Graph:            
+//  6          dist[v] ← INFINITY                 
+//  7          prev[v] ← UNDEFINED                
+//  8          add v to Q                     
+//  9      dist[source] ← 0                       
+// 10     
+// 11      while Q is not empty:
+// 12          u ← vertex in Q with min dist[u]   
+// 13                                             
+// 14          remove u from Q
+// 15         
+// 16          for each neighbor v of u still in Q:
+// 17              alt ← dist[u] + length(u, v)
+// 18              if alt < dist[v]:              
+// 19                  dist[v] ← alt
+// 20                  prev[v] ← u
+// 21
+// 22      return dist[], prev[]
+
+    let length (x,y) (x',y') = matrix.[x', y']
+
+    let initialState = SolverState.init matrix source
+
+    Seq.unfold (fun solverState -> 
+
+        let nextPos = solverState.Vertices |> Seq.minBy (fun pos -> solverState.Dist.[pos])
+        let nextVertices = solverState.Vertices |> Set.remove nextPos
+
+        let neighbors = 
+            adjacent matrix nextPos 
+            |> Seq.filter (fun pos -> nextVertices |> Set.contains pos)
+
+        let nextDist, nextPrev =
+            neighbors
+            |> Seq.fold (fun (state:Map<int*int,int>*Map<int*int, option<int*int>>) pos -> 
+                let dist, prev = state
+                let alt = dist.[nextPos] + (length pos nextPos)
+                if alt < dist.[pos] then
+                    let u = Some nextPos
+                    dist |> Map.add pos alt, prev |> Map.add pos u
                 else
-                    Map.add p lp' pq.nMap
-            let pMap' = Map.remove n pq.pMap
-            { nMap = nMap'; pMap = pMap' }
+                    dist, prev
+            ) (solverState.Dist, solverState.Prev)
 
-type Path<'node> = 'node seq
+        let nextSolverState = { Current = nextPos; Vertices = nextVertices; Dist = nextDist; Prev = nextPrev }
+        Some (nextSolverState, nextSolverState)
+    ) initialState
+    |> Seq.find (fun solverState -> solverState.Vertices |> Set.isEmpty || solverState.Current = target)
 
-module Algorithm =
+let unwind solverState =
 
-    type Config<'node when 'node : comparison> =
-        {
-            heuristic : 'node -> Score
-            neighbours : 'node -> 'node seq
-            distance : 'node -> 'node -> Score
-            isGoal : 'node -> bool
-        }
+// 1  S ← empty sequence
+// 2  u ← target
+// 3  if prev[u] is defined or u = source:          // Do something only if the vertex is reachable
+// 4      while u is defined:                       // Construct the shortest path with a stack S
+// 5          insert u at the beginning of S        // Push the vertex onto the stack
+// 6          u ← prev[u]                           // Traverse from target to source
 
-    type private Runtime<'node when 'node : comparison> =
-        {
-            heuristic : 'node -> Score
-            neighbours : 'node -> 'node seq
-            isGoal : 'node -> bool
-            distance : 'node -> 'node -> Score
-            visitedNodes : Set<'node>
-            openNodes : Priority<'node>
-            gScores : Map<'node,Score>
-            fScores : Map<'node,Score>
-            cameFrom : Map<'node,'node>
-        }
-        member this.GScore node =
-            defaultArg (this.gScores.TryFind node) System.Int32.MaxValue
-        member this.FScore node =
-            defaultArg (this.gScores.TryFind node) System.Int32.MaxValue
+    let initialPath = []
+    let initialNode = Some solverState.Current    
 
+    Seq.unfold (fun (path, (node:option<int*int>)) ->            
+        let nextState =
+            match node with
+            | Some n -> node::path, solverState.Prev.[n]
+            | None -> path, None
 
-    let private initRuntime (start : 'node) (config : Config<'node>) =
-        {
-            heuristic = config.heuristic
-            neighbours = config.neighbours
-            isGoal = config.isGoal
-            distance = config.distance
-            visitedNodes = Set.empty
-            openNodes = Priority.empty() |> Priority.insert start 0
-            gScores = Map.empty |> Map.add start 0
-            fScores = Map.empty |> Map.add start (config.heuristic start)
-            cameFrom = Map.empty
-        }
-
-
-    let rec private reconstructPath' (acc : 'node list) (toNode : 'node) (runtime : Runtime<'node>) =
-        match runtime.cameFrom.TryFind toNode with
-        | None -> toNode :: acc
-        | Some parent -> reconstructPath' (toNode :: acc) parent runtime
-
-
-    let private reconstructPath (toNode : 'node) (runtime : Runtime<'node>) =
-        reconstructPath' [] toNode runtime |> Seq.ofList
-
-
-    let private processChild (node : 'node) (runtime : Runtime<'node>) (child : 'node)=
-        let tentativeGScore = runtime.GScore node + runtime.distance node child
-        let fScoreChild = tentativeGScore + runtime.heuristic child
-        let open' = runtime.openNodes |> Priority.insert child fScoreChild
-        let gScoreChild = runtime.GScore child
-        if tentativeGScore >= gScoreChild then
-            { runtime with openNodes = open' }
-        else
-            { runtime with
-                openNodes = open'
-                cameFrom = runtime.cameFrom.Add (child, node)
-                gScores = runtime.gScores.Add (child, tentativeGScore)
-                fScores = runtime.fScores.Add (child, fScoreChild)
-            }
-
-
-    let rec private runAlgorithm (runtime : Runtime<'node>) =
-        let current = runtime.openNodes |> Priority.mininmum
-        if runtime.isGoal current then
-            runtime |> reconstructPath current
-        else
-            let open' = runtime.openNodes |> Priority.remove current
-            let visited' = runtime.visitedNodes |> Set.add current
-            let runtime' = { runtime with openNodes = open'; visitedNodes = visited' }
-            let children =
-                runtime.neighbours current
-                |> Seq.filter (visited'.Contains >> not)
-            let runtime'' =
-                children
-                |> Seq.fold (processChild current) runtime'
-            runAlgorithm runtime''
-
-
-    let aStar (start : 'node) (config : Config<'node>) =
-        config
-        |> initRuntime start
-        |> runAlgorithm
+        Some(nextState, nextState)
+    ) (initialPath, initialNode)
+    |> Seq.find (fun (_, node) -> node = None)
+    |> fst
 
 let firstStar =
-    let riskLevels = parse example
+    let riskLevels = parse input
+    let maxRow = riskLevels.GetLength(0)-1
+    let maxColumn = riskLevels.GetLength(1)-1
+    let goal = (maxRow, maxColumn)
+    let state = djikstra riskLevels (0,0) goal
     
-    let dist (x,y) (x',y') = abs (x'-x) + abs (y'-y)
+    state 
+    |> unwind 
+    |> Seq.choose id 
+    |> Seq.skip 1
+    |> Seq.sumBy (fun (row, column) -> riskLevels.[row, column])
+
+firstStar
+
+let extend  (riskLevels:int[,]) =
+    let rows = riskLevels.GetLength(0)
+    let columns = riskLevels.GetLength(1)
+
+    let extended = Array2D.zeroCreate (rows*5) (columns*5)
+    for row in 0..rows-1 do
+        for column in 0..columns-1 do
+            for i in 1..4 do
+                let value = (riskLevels.[row, column] + i) % 10
+                extended[row*i, column*i] <- (riskLevels.[row, column] + i) % 10
+
+let secondStar = 
+    let riskLevels = parse input
+
 
 
     let maxRow = riskLevels.GetLength(0)-1
     let maxColumn = riskLevels.GetLength(1)-1
     let goal = (maxRow, maxColumn)
-
-    let config : Algorithm.Config<_> =
-        {
-            heuristic = fun pos -> dist pos goal
-            neighbours = adjacent riskLevels
-            distance = fun _ _ -> 1
-            isGoal = fun pos -> pos = goal
-        }
-    in config |> Algorithm.aStar (0,0)
-
-firstStar
-
-let secondStar = 
-    0
+    let state = djikstra riskLevels (0,0) goal
+    
+    state 
+    |> unwind 
+    |> Seq.choose id 
+    |> Seq.skip 1
+    |> Seq.sumBy (fun (row, column) -> riskLevels.[row, column])
 
 secondStar
 

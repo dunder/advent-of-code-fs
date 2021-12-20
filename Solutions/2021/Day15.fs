@@ -1,6 +1,6 @@
 module AoC.E2021.Day15
 
-// >>> insert day tagline here <<<
+// --- Day 15: Chiton ---
 
 open AoC
 open IO
