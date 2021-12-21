@@ -172,27 +172,105 @@ let extend  (riskLevels:int[,]) =
     let columns = riskLevels.GetLength(1)
 
     let extended = Array2D.zeroCreate (rows*5) (columns*5)
+
     for row in 0..rows-1 do
         for column in 0..columns-1 do
-            for i in 1..4 do
-                let value = (riskLevels.[row, column] + i) % 10
-                extended[row*i, column*i] <- (riskLevels.[row, column] + i) % 10
+            for r in 0..4 do
+                for c in 0..4 do
+                    let value = riskLevels.[row, column] + r + c
+                    let value = if value > 9 then value % 9 else value
+                    let eRow = row + r*rows
+                    let eColumn = column + c*columns
+
+                    extended.[eRow, eColumn] <- value
+
+    extended
+
+let print (image:int[,]) =
+    let rows = image.GetLength(0)
+    let columns = image.GetLength(1)
+
+    printfn ""
+    for row in 0..rows-1 do
+        for column in 0..columns-1 do
+            printf "%i" image.[row,column]
+        printfn ""
+    printfn ""
+
+module AStar =
+    type Config<'a> = 
+        {
+            neighbours: 'a -> seq<'a>
+            gCost: 'a -> 'a -> int
+            fCost: 'a -> 'a -> int
+            maxIterations: int option
+        }
+
+    let search<'a when 'a : comparison> start goal config : seq<'a> option =
+
+        let rec reconstructPath cameFrom current =
+            seq {
+                yield current
+                match Map.tryFind current cameFrom with
+                | None -> ()
+                | Some next -> yield! reconstructPath cameFrom next
+            }
+
+        let rec crawler closedSet (openSet, gScores, fScores, cameFrom) =
+            match config.maxIterations with 
+            | Some n when n = Set.count closedSet -> None
+            | _ ->
+                match List.sortBy (fun n -> Map.find n fScores) openSet with
+                | current::_ when current = goal -> Some <| reconstructPath cameFrom current 
+                | current::rest ->
+                    let gScore = Map.find current gScores
+                    let next =
+                        config.neighbours current 
+                        |> Seq.filter (fun n -> closedSet |> Set.contains n |> not)
+                        |> Seq.fold (fun (openSet, gScores, fScores, cameFrom) neighbour ->
+                            let tentativeGScore = gScore + config.gCost current neighbour
+                            if List.contains neighbour openSet && tentativeGScore >= Map.find neighbour gScores 
+                            then (openSet, gScores, fScores, cameFrom)
+                            else
+                                let newOpenSet = if List.contains neighbour openSet then openSet else neighbour::openSet
+                                let newGScores = Map.add neighbour tentativeGScore gScores
+                                let newFScores = Map.add neighbour (tentativeGScore + config.fCost neighbour goal) fScores
+                                let newCameFrom = Map.add neighbour current cameFrom
+                                newOpenSet, newGScores, newFScores, newCameFrom
+                            ) (rest, gScores, fScores, cameFrom)
+                    crawler (Set.add current closedSet) next
+                | _ -> None
+
+        let gScores = Map.ofList [start, 0]
+        let fScores = Map.ofList [start, config.fCost start goal]
+        crawler Set.empty ([start], gScores, fScores, Map.empty)
 
 let secondStar = 
     let riskLevels = parse input
-
-
+    let riskLevels = extend riskLevels
 
     let maxRow = riskLevels.GetLength(0)-1
     let maxColumn = riskLevels.GetLength(1)-1
     let goal = (maxRow, maxColumn)
-    let state = djikstra riskLevels (0,0) goal
+
+    let manhattanDistance (x, y) (x', y') = abs (x' - x) + abs (y' - y)
+
+    let riskDistance pos1 pos2 = 
+        let row, column = pos2
+        riskLevels.[row, column]
+
+    let hasReachedTarget pos = pos = goal
+
+    let config:AStar.Config<int*int> = { neighbours = adjacent riskLevels; gCost = riskDistance; fCost = manhattanDistance; maxIterations = None}
+
+    match AStar.search (0,0) goal config with
+    | Some path -> 
+        path 
+        |> Seq.rev
+        |> Seq.skip 1
+        |> Seq.sumBy (fun (row, column) -> riskLevels.[row, column])        
+    | None -> failwith "Found no shortest path"
     
-    state 
-    |> unwind 
-    |> Seq.choose id 
-    |> Seq.skip 1
-    |> Seq.sumBy (fun (row, column) -> riskLevels.[row, column])
 
 secondStar
 
