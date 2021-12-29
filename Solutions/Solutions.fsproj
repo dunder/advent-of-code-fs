@@ -250,6 +250,9 @@
     <Compile Include="2021\Day18.fs" />
     <Compile Include="2021\Day19.fs" />
     <Compile Include="2021\Day20.fs" />
+    <Compile Include="2021\Day21.fs" />
+    <Compile Include="2021\Day22.fs" />
+    <Compile Include="2021\Day23.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
 
