@@ -131,7 +131,15 @@ let matchScanners (scanner1:list<int*int*int>) (scanner2:list<int*int*int>) =
     else 
         None
 
-type ScannerSearch = { Overlap: Set<int*int*int>; ScannersToMatch: list<int>; VisitedScanners: Set<int>; ProjectedReadings: Map<int,list<int*int*int>>; Scanners: list<list<int*int*int>>}
+type ScannerSearch = 
+    { 
+        Overlap: Set<int*int*int>
+        ScannersToMatch: list<int>
+        VisitedScanners: Set<int> 
+        ProjectedReadings: Map<int,list<int*int*int>>
+        ScannerPositions: Map<int, int*int*int>
+        Scanners: list<list<int*int*int>>
+    }
 
 module ScannerSearch = 
 
@@ -150,7 +158,14 @@ module ScannerSearch =
 
 let scannerSearch (scannerReadings: list<list<int*int*int>>) = 
 
-    let searchState = { Overlap = Set.empty; ScannersToMatch = [0]; VisitedScanners = Set.empty; ProjectedReadings = Map.empty |> Map.add 0 scannerReadings.[0]; Scanners = scannerReadings}
+    let searchState = 
+        { 
+            Overlap = Set.empty
+            ScannersToMatch = [0]
+            VisitedScanners = Set.empty
+            ProjectedReadings = Map.empty |> Map.add 0 scannerReadings.[0]
+            ScannerPositions = Map.empty |> Map.add 0 (0,0,0)
+            Scanners = scannerReadings}
 
     Seq.unfold(fun searchState ->
 
@@ -177,11 +192,12 @@ let scannerSearch (scannerReadings: list<list<int*int*int>>) =
                 match matchedScanner with
                 | Some matchedScanner ->
                     let orientationIndex, relative, matchedBeacons, projectedReadings = matchedScanner
+                    let newPositions = searchState.ScannerPositions |> Map.add matchedScannerIndex relative
                     let newBeacons = matchedBeacons |> List.map fst |> Set.ofList
                     let newOverlap = searchState.Overlap |> Set.union newBeacons
                     let newProjectedReadings = searchState.ProjectedReadings |> Map.add matchedScannerIndex projectedReadings
                 
-                    { searchState with Overlap = newOverlap; ProjectedReadings = newProjectedReadings }
+                    { searchState with Overlap = newOverlap; ProjectedReadings = newProjectedReadings; ScannerPositions = newPositions }
                 | None -> searchState
             
             ) searchState
@@ -202,11 +218,26 @@ let firstStar =
 
     searchResult |> ScannerSearch.countBeacons
 
+// returns a list of lists of all the combinations of n of the list of l
+let rec combinations n l = 
+    match n, l with
+    | 0, _ -> [[]]
+    | _, [] -> []
+    | k, (x::xs) -> List.map ((@) [x]) (combinations (k-1) xs) @ combinations k xs
+
+let manhattanDistance (x, y, z) (x', y', z') = abs (x' - x) + abs (y' - y) + abs (z' - z)
+
+let secondStar =
+    let scanners = parse input
+
+    let searchResult = scannerSearch scanners
+
+    let scannerPositions = searchResult.ScannerPositions |> Map.toList |> List.map snd
+
+    combinations 2 scannerPositions 
+    |> List.map (fun pair -> manhattanDistance pair.[0] pair.[1])
+    |> List.max
+
     
-firstStar
 
-let secondStar = 
-    0
-
-secondStar
 
