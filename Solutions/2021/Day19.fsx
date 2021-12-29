@@ -66,7 +66,6 @@ let allOrientations pos =
     |> flip
     |> Seq.map scramble
     |> Seq.collect id
-    |> Seq.distinct
     |> Seq.toList
 
 let diffScanners (scanner1:list<int*int*int>) (scanner2:list<int*int*int>) =
@@ -104,7 +103,9 @@ let matchScanners (scanner1:list<int*int*int>) (scanner2:list<int*int*int>) =
         |> List.map (fun i -> 
             let matched = 
                 scannerDiff 
-                |> List.groupBy (fun (pos1, pos2, diffs) -> diffs.[i])
+                |> List.groupBy (fun (pos1, pos2, diffs) -> 
+                    // sometimes diffs length is 24 and other times 48 cant handle 24
+                    diffs.[i])
                 |> List.filter (fun (key, group) -> group.Length >= 12)
             match matched |> Seq.length with
             | 1 -> 
@@ -114,13 +115,13 @@ let matchScanners (scanner1:list<int*int*int>) (scanner2:list<int*int*int>) =
             | n -> failwithf "Expected one or no match but found %i matches" n
         )
         |> List.choose id
-    
+
     let diff pos1 pos2 = 
         let x1, y1, z1 = pos1
         let x2, y2, z2 = pos2
 
         x1-x2, y1-y2, z1-z2
-
+    
     if grouped |> Seq.length = 1 then
         let i, matchedPositions = (grouped |> Seq.exactlyOne)
         let pos1, pos2 = matchedPositions.[0]
@@ -154,15 +155,9 @@ let scannerSearch (scannerReadings: list<list<int*int*int>>) =
     Seq.unfold(fun searchState ->
 
         let nextScannerToEvaluate = searchState.ScannersToMatch.Head
-        
         let newVisitedScanners = searchState.VisitedScanners |> Set.add nextScannerToEvaluate
-
         let searchState = { searchState with VisitedScanners = newVisitedScanners }
-
-        printfn "searching: current = %i, overlapping = %i, visited = %i" nextScannerToEvaluate (searchState.Overlap |> Set.count) (searchState.VisitedScanners |> Set.count)
-
         let otherScanners = searchState |> ScannerSearch.otherScanners
-        
         let matchedScanners = otherScanners |> List.map (fun (i, scanner) -> i, matchScanners searchState.ProjectedReadings.[nextScannerToEvaluate] scanner)
 
         let matchingScanners = 
@@ -173,19 +168,16 @@ let scannerSearch (scannerReadings: list<list<int*int*int>>) =
                 | None -> false
             )
 
-        printfn "matchingScanners: %O" (matchingScanners |> List.map fst)
-
         let matchingScannerIndeces = matchingScanners |> List.map fst
 
         let searchState = 
-            matchingScanners             
+            matchingScanners
             |> Seq.fold (fun searchState (matchedScannerIndex, matchedScanner) -> 
 
                 match matchedScanner with
                 | Some matchedScanner ->
                     let orientationIndex, relative, matchedBeacons, projectedReadings = matchedScanner
                     let newBeacons = matchedBeacons |> List.map fst |> Set.ofList
-                    printfn "Matched scanner %i with %i. Relative: %O New beacons: %O" nextScannerToEvaluate matchedScannerIndex relative newBeacons
                     let newOverlap = searchState.Overlap |> Set.union newBeacons
                     let newProjectedReadings = searchState.ProjectedReadings |> Map.add matchedScannerIndex projectedReadings
                 
@@ -198,15 +190,13 @@ let scannerSearch (scannerReadings: list<list<int*int*int>>) =
 
         let nextSearchState = { searchState with  ScannersToMatch = newScannersToMatch }
 
-        printfn "next state (overlapping: %i): %O " (nextSearchState.Overlap |> Set.count) nextSearchState
-
         Some(nextSearchState, nextSearchState)
     ) searchState
     |> Seq.find (fun searchState -> searchState.ScannersToMatch |> List.isEmpty)
 
 
 let firstStar =
-    let scanners = parse example
+    let scanners = parse input
 
     let searchResult = scannerSearch scanners
 
