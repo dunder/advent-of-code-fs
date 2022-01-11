@@ -63,29 +63,41 @@ let move start steps =
     let stop = (start + steps) % 10
     if stop = 0 then 10 else stop
 
-let rec diracDice player1Position player2Position (turn:int) (scorePlayer1: int64) (scorePlayer2: int64) =
-    
+// https://wj32.org/wp/2016/01/13/f-code-memoize-a-recursive-function/
+let memoize f =
+    let mem = System.Collections.Generic.Dictionary<'a, 'b>();
+    let rec g key = h g key
+    and h r key =
+        match mem.TryGetValue(key) with
+        | (true, value) -> value
+        | _ ->
+        let value = f g key
+        mem.Add(key, value)
+        value
+    g
+
+let diracDice recurseF (player1Position, player2Position, scorePlayer1, scorePlayer2) = 
     let nextTurn (winsPlayer1, winsPlayer2) (outcome, occurances) =
         
-        let player1Turn = turn = 0
-        let player2Turn = not player1Turn
-        let nextTurn = if turn = 0 then 1 else 0
-        let player1NextPosition = if player1Turn then move player1Position outcome else player1Position
-        let player2NextPosition = if player2Turn then move player2Position outcome else player2Position
-        let player1NextScore = if player1Turn then scorePlayer1 + (player1NextPosition |> int64) else scorePlayer1
-        let player2NextScore = if player2Turn then scorePlayer2 + (player2NextPosition |> int64) else scorePlayer2
+        // alternating players between levels so this will actually be player 2 for levels 2, 4 etc
+        let player1NextPosition = move player1Position outcome
+        let player1NextScore = scorePlayer1 + (player1NextPosition |> int64)
                 
-        let (player1NextWins, player2NextWins) = diracDice player1NextPosition player2NextPosition nextTurn player1NextScore player2NextScore
+        // swap the players for the next round
+        let (player2NextWins, player1NextWins) = recurseF(player2Position,player1NextPosition,scorePlayer2,player1NextScore)
+
         winsPlayer1 + player1NextWins * (occurances |> int64), winsPlayer2 + player2NextWins * (occurances |> int64)
 
-    if scorePlayer1 >= 21L then
-        1L, 0L
-    else if scorePlayer2 >= 21L then
+    // since we are alternating players for every "level", this check is effectively a check that player 1 has reached 
+    // the winning score after a full turn (both players have made 3*n throws with the dice)
+    if scorePlayer2 >= 21L then
         0L, 1L
     else 
         outcomeByCount |> List.fold nextTurn (0L, 0L)
 
+let playDiracDice player1Position player2Position = ((memoize diracDice) (player1Position, player2Position, 0L, 0L))
+
 let secondStar () = 
-    let player1Wins, player2Wins = diracDice 8 5 0 0L 0L
+    let player1Wins, player2Wins = playDiracDice 8 5 
 
     max player1Wins player2Wins
