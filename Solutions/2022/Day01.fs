@@ -1,13 +1,12 @@
-module AoC.E2021.Day23
+module AoC.E2022.Day01
 
 // >>> insert day tagline here <<<
 
 open AoC
 open IO
-open FSharpx.Collections
 
 
-let input = readInputLines "2021" "Day23" |> List.ofSeq
+let input = readInputLines "2022" "Day01" |> List.ofSeq
 
 
 let firstStar () =
