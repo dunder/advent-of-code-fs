@@ -1,68 +1,98 @@
-﻿module AoC.E2016.Day01
-
-open AoC
-open IO
-open Matrix
+module AoC.E2016.Day01
 
 // --- Day 1: No Time for a Taxicab ---
 
+open AoC
+open IO
+
+
 let input = readInputText "2016" "Day01"
 
-let toTurn = function
+let example = "R5, L5, R5, R3"
+
+type Direction = North | East | South | West
+
+type Turn = Left | Right
+
+let toTurn c = 
+    match c with
     | 'L' -> Left
     | 'R' -> Right
-    | c -> failwithf "Unrecognized turn %c" c
+    | _ -> failwithf "Invalid turn: %c" c
 
-let visits facing steps pos =
-    [1..steps] |> List.scan (fun acc _ -> (move facing acc)) pos |> List.tail
+let parse (text: string) = 
+    text.Split(", ")
+    |> Seq.map(fun instruction -> instruction[0] |> toTurn, instruction.Substring(1) |> int)
+
+let turn heading direction  =
+    match (heading, direction) with
+    | North, Left -> West
+    | North, Right -> East
+    | East, Left -> North
+    | East, Right -> South
+    | South, Left -> East
+    | South, Right -> West
+    | West, Left -> South
+    | West, Right -> North
+
+let distance x y = abs x + abs y
+
+let move (x, y, heading) steps=
+    match heading with
+    | North -> x, y + steps, heading
+    | East -> x + steps, y, heading
+    | South -> x, y - steps, heading
+    | West -> x - steps, y, heading
+
+let turnAndMove (x, y, heading) (direction, steps) =
+    let newHeading = turn heading direction
+    move (x, y, newHeading) steps
+
 
 let firstStar () =
-    let finish = 
-        input.Split(", ")
-        |> Seq.fold (fun (facing, position) direction -> 
-            let turnTo = direction |> Seq.head |> toTurn
-            let steps = direction |> Seq.tail |> System.String.Concat |> int
-            let nowFacing = turn facing turnTo
-            let newPosition = position |> moveN steps nowFacing
-            (nowFacing, newPosition)
-        ) (Direction.North, { X = 0; Y = 0 })
-
-    manhattanDistance { X = 0; Y = 0 } (finish |> snd)
-    
-
-let secondStar () =
-    input.Split(", ")
-    |> Seq.scan (fun (facing, (position, _)) direction -> 
-        let turnTo = direction |> Seq.head |> toTurn
-        let steps = direction |> Seq.tail |> System.String.Concat |> int
-        let nowFacing = turn facing turnTo
-        let positions = visits nowFacing steps position
-        (nowFacing, (positions |> List.last, positions))
-    ) (Direction.North, ({ X = 0; Y = 0 }, []))
-    |> Seq.map (snd >> snd)
-    |> Seq.collect (id)
-    |> Seq.mapFold (fun (visited:Map<Position,int>) pos -> 
-        let count = if visited.ContainsKey pos then visited.[pos] + 1 else 1
-        ((pos, count), visited |> Map.add pos count)
-    ) Map.empty
-    |> fst
-    |> Seq.find (fun (_, count) -> count > 1)
-    |> fst
-    |> manhattanDistance { X = 0; Y = 0 }
-    
-        
+    input
+    |> parse
+    |> Seq.fold turnAndMove (0, 0, North)
+    |> fun (x, y, _) -> x, y
+    ||> distance
 
 
-module Tests =
 
-    open Xunit
+type Operation =
+    | Turn of Turn
+    | Step
 
-    [<Fact>]
-    let ``first star`` () =
+let toOperations (turn, steps) =
+    seq {
+        yield Turn(turn)
+        yield! Seq.replicate steps Step
+    }
 
-        Assert.Equal(209, firstStar())
+let movement (x, y, direction, keep) operation =
+    match operation with
+    | Turn t -> 
+        let newDirection = turn direction t
+        (x, y, newDirection, false)
+    | Step -> 
+        match direction with
+        | North -> (x, y + 1, direction, true)
+        | East -> (x + 1, y, direction, true)
+        | South -> (x, y - 1, direction, true)
+        | West -> (x - 1, y, direction, true)
 
-    [<Fact>]
-    let ``second star`` () =
+let collectVisited (_, visited, found) (x, y) =
+    (x, y), visited |> Set.add (x, y), visited |> Set.contains (x, y)
 
-        Assert.Equal(136, secondStar())
+
+let secondStar () = 
+    input
+    |> parse
+    |> Seq.map toOperations
+    |> Seq.concat
+    |> Seq.scan movement (0, 0, North, false)
+    |> Seq.where (fun (_, _, _, keep) -> keep)
+    |> Seq.map (fun (x, y, _, _) -> x, y)
+    |> Seq.scan collectVisited ((0,0), Set.empty, false)
+    |> Seq.find (fun ((x, y), visited, found) -> found)
+    |> (fun ((x, y), visited, found) -> (x, y))
+    ||> distance
