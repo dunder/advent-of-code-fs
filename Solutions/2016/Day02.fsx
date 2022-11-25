@@ -1,13 +1,10 @@
-module AoC.E2016.Day02
-
 // --- Day 2: Bathroom Security ---
 
-open AoC
-open IO
+open System.IO
 
+System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
 
-let input = readInputLines "2016" "Day02" |> List.ofSeq
-
+let input = File.ReadLines(@".\Input\Day02.txt") |> List.ofSeq
 
 type Direction = Up | Right | Down | Left
 
@@ -17,11 +14,21 @@ let toDirection c =
     | 'R' -> Right
     | 'D' -> Down
     | 'L' -> Left
-    | _ -> failwithf "Illegal direction: %c" cd
+    | _ -> failwithf "Illegal direction: %c" c
+
+let example = 
+    [
+        "ULL"
+        "RRDDD"
+        "LURDL"
+        "UUUUD"
+    ]
 
 let parse (lines: string list) =
     lines
     |> List.map(fun line -> line |> Seq.map toDirection |> Seq.toList)
+
+example |> parse
 
 let move (x, y) direction =    
     match direction with
@@ -44,18 +51,23 @@ let toDigit (x, y) =
     | 1,-1 -> "9"
     | _ -> failwithf "Illegal position: %i, %i" x y
 
+["LURDL"] |> parse |> Seq.head |> Seq.scan move (0, 0) |> Seq.toList
 
-let firstStar () =
-    input
-    |> parse
-    |> List.scan (fun (x, y) sequences -> 
-        sequences 
-        |> List.fold move (x, y) 
-    ) (0,0)
-    |> List.skip 1
-    |> List.map toDigit
-    |> List.reduce (+)
+input
+|> parse
+|> List.scan (fun (x, y) sequences -> 
+    sequences 
+    |> List.fold move (x, y) 
+) (0,0)
+|> List.skip 1
+|> List.map toDigit
 
+
+
+let firstStar =
+    0
+
+firstStar
 
 let diamondKeypadToDigit (x, y) =
     match x, y with
@@ -86,14 +98,18 @@ let diamondMove (x, y) direction =
     | Left when (y = -1 || y = 1) && x > -1 -> x - 1, y
     | _ -> x, y
 
+input
+|> parse
+|> List.scan (fun (x, y) sequences -> 
+    sequences 
+    |> List.fold diamondMove (x, y) 
+) (0,0)
+|> List.skip 1
+|> List.map diamondKeypadToDigit
 
-let secondStar () = 
-    input
-    |> parse
-    |> List.scan (fun (x, y) sequences -> 
-        sequences 
-        |> List.fold diamondMove (x, y) 
-    ) (0,0)
-    |> List.skip 1
-    |> List.map diamondKeypadToDigit
-    |> List.reduce (+)
+
+let secondStar = 
+    0
+
+secondStar
+
