@@ -17,7 +17,7 @@ let toDirection c =
     | 'R' -> Right
     | 'D' -> Down
     | 'L' -> Left
-    | _ -> failwithf "Illegal direction: %c" cd
+    | _ -> failwithf "Illegal direction: %c" c
 
 let parse (lines: string list) =
     lines

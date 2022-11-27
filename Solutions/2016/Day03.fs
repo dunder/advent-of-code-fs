@@ -1,50 +1,52 @@
-﻿module AoC.E2016.Day03
+module AoC.E2016.Day03
+
+// --- Day 3: Squares With Three Sides ---
 
 open AoC
 open IO
 
-// --- Day 3: Squares With Three Sides ---
 
 let input = readInputLines "2016" "Day03" |> List.ofSeq
 
-let lineToInts (line: string) = line.Split("  ", System.StringSplitOptions.RemoveEmptyEntries) |> Array.map int |> List.ofArray
+let parse (lines: string list) =
+    lines
+    |> List.map(fun line -> 
+        line.Split(" ") 
+        |> Array.where (fun x -> x.Length > 0)
+        |> Array.map (fun number -> number.Trim() |> int)
+        |> List.ofArray
+    )
 
-let parse (lines: list<string>) = lines |> List.map lineToInts
-
-let parseColumn (lines: list<string>) = 
-    let sliceColumns lines = 
-        let intLines = lines |> List.map lineToInts
-        let sliceColumn col = intLines |> List.map (fun line -> line.[col]) |> List.ofSeq
-        [0..2]
-        |> List.map sliceColumn
-    lines 
-        |> List.chunkBySize 3 
-        |> List.map sliceColumns
-    |> List.collect (id)
-
-let couldBeTriangle = function
-    | [x;y;z] -> x + y > z && x + z > y && y + z > x
-    | x -> failwithf "Expecting triangles to be three ints, was: %A" x
+let possible (triangle: int list) =
+    match triangle with 
+    | [a;b;c] -> a + b > c && a + c > b && c + b > a
+    | _ -> failwithf "Not a triangle: %A" triangle
 
 
 let firstStar () =
-    let x = parse input
-    x |> List.filter couldBeTriangle |> List.length
+    input 
+    |> parse
+    |> List.where possible
+    |> List.length
+
+
+let chunkToTriangles (chunk:int list list) =
+    [
+        [chunk[0][0];chunk[1][0];chunk[2][0]]
+        [chunk[0][1];chunk[1][1];chunk[2][1]]
+        [chunk[0][2];chunk[1][2];chunk[2][2]]
+    ]
+
+let parseVertical (lines: string list) =
+    lines
+    |> parse
+    |> List.chunkBySize 3
+    |> List.map chunkToTriangles
+    |> List.concat
+
 
 let secondStar () = 
-    let x = parseColumn input
-    x |> List.filter couldBeTriangle |> List.length
-
-
-module Tests =
-
-    open Xunit
-
-    [<Fact>]
-    let ``first star`` () =
-
-        Assert.Equal(1050, firstStar())
-
-    [<Fact>]
-    let ``second star`` () =
-        Assert.Equal(1921, secondStar())
+    input
+    |> parseVertical
+    |> List.where possible
+    |> List.length
