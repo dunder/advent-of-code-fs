@@ -29,12 +29,28 @@ input
 let firstStar =
     0
 
+let example = [
+    "101 301 501"
+    "102 302 502"
+    "103 303 503"
+    "201 401 601"
+    "202 402 602"
+    "203 403 603"
+]
+
+
+
 let chunkToTriangles (chunk:int list list) =
+    let width = chunk |> List.head |> List.length
+    let chunkSize = chunk |> List.length
     [   
-        for i in 0..chunk.Length-1 do
-            let row = chunk[i]
-            yield [for _ in 0..row.Length-1 do yield row[i]]
+        for columnIndex in 0..width-1 do
+            yield [for rowIndex in 0..chunkSize-1 do yield chunk[rowIndex][columnIndex]]
     ]
+
+example |> parse |> chunkToTriangles
+
+
 
 let parseVertical (lines: string list) =
     lines
