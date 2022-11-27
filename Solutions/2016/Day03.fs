@@ -31,10 +31,10 @@ let firstStar () =
 
 
 let chunkToTriangles (chunk:int list list) =
-    [
-        [chunk[0][0];chunk[1][0];chunk[2][0]]
-        [chunk[0][1];chunk[1][1];chunk[2][1]]
-        [chunk[0][2];chunk[1][2];chunk[2][2]]
+    [   
+        for i in 0..chunk.Length-1 do
+            let row = chunk[i]
+            yield [for _ in 0..row.Length-1 do yield row[i]]
     ]
 
 let parseVertical (lines: string list) =

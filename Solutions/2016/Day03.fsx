@@ -9,9 +9,8 @@ let input = File.ReadLines(@".\Input\Day03.txt") |> List.ofSeq
 let parse (lines: string list) =
     lines
     |> List.map(fun line -> 
-        line.Split(" ") 
-        |> Array.where (fun x -> x.Length > 0)
-        |> Array.map (fun number -> number.Trim() |> int)
+        line.Split(" ", System.StringSplitOptions.RemoveEmptyEntries)         
+        |> Array.map int
         |> List.ofArray
     )
 
@@ -31,10 +30,10 @@ let firstStar =
     0
 
 let chunkToTriangles (chunk:int list list) =
-    [
-        [chunk[0][0];chunk[1][0];chunk[2][0]]
-        [chunk[0][1];chunk[1][1];chunk[2][1]]
-        [chunk[0][2];chunk[1][2];chunk[2][2]]
+    [   
+        for i in 0..chunk.Length-1 do
+            let row = chunk[i]
+            yield [for _ in 0..row.Length-1 do yield row[i]]
     ]
 
 let parseVertical (lines: string list) =
