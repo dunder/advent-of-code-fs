@@ -1,113 +1,87 @@
-﻿module AoC.E2016.Day04
-
-open AoC
-open IO
-open System.Text.RegularExpressions
+module AoC.E2016.Day04
 
 // --- Day 4: Security Through Obscurity ---
 
+open AoC
+open IO
+
+
 let input = readInputLines "2016" "Day04" |> List.ofSeq
 
-type RoomIdentifier = { Name: string; Id: int; Checksum: string }
+type Room = { EncryptedName : string; Id : int; Checksum: string; }
 
+type DecryptedRoom = { DecryptedName : string; Id : int }
 
-let toRoomIdentifier line = 
-    let regex = Regex("([a-z\-]+)(\d+)\[([a-z]{5})\]")
-    let m = regex.Match(line)
-    let name = m.Groups.[1].Value
-    let id = m.Groups.[2].Value |> int
-    let checksum = m.Groups.[3].Value
+let parse (lines: string list) =
 
-    { Name = name; Id = id; Checksum = checksum }
+    let parseLine (line:string) =
+        let breakIndex = line.LastIndexOf("-")
+        {
+            EncryptedName = line.Substring(0, breakIndex)
+            Id = line.Substring(breakIndex + 1,3) |> int
+            Checksum = line.Substring(breakIndex + 5, 5)
+        }
 
-let parse lines = lines |> List.map toRoomIdentifier
+    lines |> List.map parseLine
 
-let countLetters room = 
-    room.Name 
-    |> Seq.filter System.Char.IsLetter 
-    |> Seq.groupBy (id)
-    |> Seq.map (fun (key, values) -> (key, values |> Seq.length))
+module Room =
 
-let letterCountSort (c1, count1) (c2, count2) = 
-    if count1 <> count2 then
-        count2 - count1
-    else
-        (c1 |> int) - (c2 |> int)
-    
-let isValidChecksum roomIdentifier =
-    
-    let checksum = 
-        countLetters roomIdentifier
-        |> Seq.sortWith letterCountSort 
-        |> Seq.take 5 
-        |> Seq.map fst
-        |> System.String.Concat
+    let checksum room =
+        let sortBySizeThenLetter (c1, group1) (c2, group2) =    
+            // descending
+            let groupCompare = compare (Seq.length group2) (Seq.length group1)
+            if groupCompare <> 0 then
+                groupCompare
+            else
+                // ascending
+                let keyCompare = compare c1 c2
+                keyCompare
+        room.EncryptedName.Replace("-", "")
+        |> Seq.groupBy id
+        |> Seq.toArray
+        |> Array.sortWith sortBySizeThenLetter
+        |> Array.take 5
+        |> Array.map fst 
+        |> System.String
 
-    checksum = roomIdentifier.Checksum
+    let checksumMatch room = room.Checksum = checksum room
 
-let alphabetLength = ('z' |> int) - ('a' |> int) + 1
-let a = 'a' |> int
+    let decrypt room =
 
-let shift times c = 
-    match c with
-    | '-' -> ' '
-    | c -> ((c |> int) - a + times) % alphabetLength + a |> char
+        let shift (c:char) id = 
+            let aInt = 'a' |> int
+            let position = ((c |> int) + id - aInt) % 26
+            position + aInt |> char
 
-let decrypt (room: RoomIdentifier) = room.Name |> String.map (shift room.Id) |> System.String.Concat
+        let decryptedName = 
+            room.EncryptedName 
+            |> Seq.map (fun c ->
+                match c with
+                | '-' -> ' '
+                | c when c >= 'a' && c <= 'z' -> shift c room.Id
+                | _ -> failwithf "Unexpected character in name: %c" c)
+            |> Seq.toArray
+            |> System.String
+
+        {
+            DecryptedName = decryptedName
+            Id = room.Id
+        }
+
 
 let firstStar () =
-    parse input
-    |> List.filter isValidChecksum
-    |> List.sumBy (fun x -> x.Id)
+    input
+    |> parse
+    |> List.filter Room.checksumMatch
+    |> List.sumBy (fun room -> room.Id)
+
 
 let secondStar () = 
-    let northPoleObjects =
-        parse input
-        |> List.filter isValidChecksum
-        |> List.map (fun room -> decrypt room, room)
-        |> List.find (fun (decrypted, room) -> decrypted.Contains("northpole"))
-        
-    (northPoleObjects |> snd).Id
+    let storage = 
+        input
+        |> parse
+        |> List.filter Room.checksumMatch
+        |> List.map Room.decrypt
+        |> List.find(fun room -> room.DecryptedName.Contains("north"))
 
-
-module Tests =
-
-    open Xunit
-
-    [<Fact>]
-    let ``first star`` () =
-
-        Assert.Equal(137896, firstStar())
-
-    [<Fact>]
-    let ``second star`` () =
-
-        Assert.Equal(501, secondStar())
-
-    [<Theory>]
-    [<InlineData("aaaaa-bbb-z-y-x-123[abxyz]", true)>]
-    [<InlineData("a-b-c-d-e-f-g-h-987[abcde]", true)>]
-    [<InlineData("not-a-real-room-404[oarel]", true)>]
-    [<InlineData("totally-real-room-200[decoy]", false)>]
-    let ``valid checksum`` (identifier: string) (valid: bool) =
-        
-        let isValid = isValidChecksum (toRoomIdentifier identifier)
-        Assert.Equal(valid, isValid)
-
-    [<Theory>]
-    [<InlineData('a', 1, 'b')>]
-    [<InlineData('z', 1, 'a')>]
-    let ``shift`` (c: char) (times: int) (expected: char) =
-        
-        let shifted = shift times c
-
-        Assert.Equal(expected, shifted)
-
-    [<Fact>]
-    let ``decrypt`` () =
-        
-        let room = toRoomIdentifier "qzmt-zixmtkozy-ivhz-343[zimth]"
-
-        let decrypted = decrypt room
-
-        Assert.Equal("very encrypted name ", decrypted)
+    storage.Id
