@@ -239,6 +239,7 @@
     <Compile Include="2021\Day22.fs" />
     <Compile Include="2021\Day23.fs" />
     <Compile Include="2022\Day01.fs" />
+    <Compile Include="2022\Day02.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
