@@ -50,7 +50,7 @@ module RuleSet =
     let countMatchingRules (values: list<int>) (ruleSet: RuleSet) =
         ruleSet |> List.filter (Rule.isMatching values) |> List.length
 
-let parseRules lines = 
+let parseRules (lines: string list) = 
     let regex = Regex(@"(.+): (\d+)-(\d+) or (\d+)-(\d+)")
     lines
     |> List.filter regex.IsMatch

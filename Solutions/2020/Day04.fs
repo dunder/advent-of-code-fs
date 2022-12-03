@@ -66,10 +66,10 @@ let validHeight value =
         | _ -> failwithf "Unrecognized unit: %s" unit
     | _ -> false
 
-let validHairColor value = 
+let validHairColor (value: string) = 
     Regex.IsMatch(value, "#[0-9a-f]{6}")
 
-let validEyeColor value =
+let validEyeColor (value: string) =
     Regex.IsMatch(value, "(amb|blu|brn|gry|grn|hzl|oth)")
 
 let validPassportId (value:string) =
