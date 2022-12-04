@@ -40,7 +40,7 @@ let rec twoConsecutiveLettersTwice s =
             else 
                 twoConsecutiveLettersTwice s.[1..]
 
-let letterRepeatedWithAnyOtherLetterBetween s = 
+let letterRepeatedWithAnyOtherLetterBetween (s: string) = 
     let expr = Regex @"([a-z])[a-z]\1"
     expr.IsMatch s
     

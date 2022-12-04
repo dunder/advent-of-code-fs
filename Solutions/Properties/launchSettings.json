@@ -2,7 +2,7 @@
   "profiles": {
     "Solutions": {
       "commandName": "Project",
-      "commandLineArgs": "run -e 2020 -d 18 -x 1"
+      "commandLineArgs": "run -e 2022 -d 4 -fs"
     }
   }
 }
