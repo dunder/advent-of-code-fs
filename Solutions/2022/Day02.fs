@@ -43,15 +43,13 @@ let shapeScore play =
 
 let roundOutcome player opponent =
     match player, opponent with
-    | Rock, Rock -> Draw
     | Rock, Paper -> Lose
     | Rock, Scissors -> Win
     | Paper, Rock -> Win
-    | Paper, Paper -> Draw
     | Paper, Scissors -> Lose
     | Scissors, Rock -> Lose
     | Scissors, Paper -> Win
-    | Scissors, Scissors -> Draw
+    | _, _ -> Draw
 
 let outcomeScore outcome =
     match outcome with
@@ -95,14 +93,12 @@ let parse2 (lines: string list) =
 
 let predict opponent outcome =
     match opponent, outcome with
+    | opponent, Draw -> opponent
     | Rock, Lose -> Scissors
-    | Rock, Draw -> Rock
     | Rock, Win -> Paper
     | Paper, Lose -> Rock
-    | Paper, Draw -> Paper
     | Paper, Win -> Scissors
     | Scissors, Lose -> Paper
-    | Scissors, Draw -> Scissors
     | Scissors, Win -> Rock
 
 let scoreOutcome prediction =
