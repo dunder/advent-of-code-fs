@@ -35,7 +35,6 @@ let allElements (a:'a[,]) =
             yield (row, column), a[row,column] 
     }
 
-
 let lineOfSightUp (row, column) (a: int[,]) =
     if row = 0 then 
         Seq.empty 
@@ -119,6 +118,16 @@ let printLineOfSight direction  (tree:int*int) (forest:int[,]) lineOfSight =
     printfn "%s: %A, visible: %b" direction treeHeightsInLineOfSight visible
 
 let test = 1,2
+
+let alternateLineOfSightUp (row, column) (forest:int[,]) =
+    forest[0..row-1, column] |> Array.rev
+
+let alternateLineOfSightRight (row, column) (forest:int[,]) =
+    forest[row, column+1..forest.GetLength(1)]
+
+
+alternateLineOfSightRight (1,2) forest
+
 printLineOfSight "up" test forest lineOfSightUp
 printLineOfSight "right" test forest lineOfSightRight
 printLineOfSight "down" test forest lineOfSightDown
