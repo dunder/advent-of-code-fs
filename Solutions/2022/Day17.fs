@@ -5,7 +5,6 @@ module AoC.E2022.Day17
 open AoC
 open IO
 
-
 let input = readInputText "2022" "Day17"
 
 
@@ -25,13 +24,14 @@ type Rock = { Shape: Shape; X: int; Y: int; Content: int list }
         else
             failwithf "No such layer y: %i. (Height = %i)" y this.Height
     member this.Index y = this.Y - y
-        
-type CaveState = { Rocks: list<int>; FallingRock: Rock; AtRest: bool; JetIndex: int; Count: int }
+
+type CaveState = { Rocks: list<int>; FallingRock: Rock; AtRest: bool; JetIndex: int; Count: int; Height: int }
 
 let chamberWidth = 7
 let walls = 256 + 1
 let rockReleaseHeight = 3
 let bottom = 256 + 128 + 64 + 32 + 16 + 8 + 4 + 2 + 1
+
 module CaveState =
     
     let release y count =
@@ -59,7 +59,9 @@ module CaveState =
 
         let after = cave.Rocks |> List.skip (y2 + 1)
 
-        { cave with Rocks = before @ newRocks @ after; AtRest = true }
+        let newHeight = max cave.Height cave.FallingRock.Y
+
+        { cave with Rocks = before @ newRocks @ after; AtRest = true; Height = newHeight }
 
     let height cave = 
         let index =
@@ -67,10 +69,12 @@ module CaveState =
             |> List.findIndex (fun layer -> layer ||| walls <> walls) 
         cave.Rocks.Length - index - 1
 
+    let top cave = cave.Rocks |> List.find (fun layer -> layer <> walls)
+
     let loadNextRock cave =
         let newFallingRock = release (height cave) (cave.Count + 1)
-        let rockHeight = newFallingRock.Height
-        let newRocks = [1..rockHeight] |> List.fold (fun state i -> walls::state) cave.Rocks
+        let fillCount = newFallingRock.Y - cave.Rocks.Length
+        let newRocks = [0..fillCount] |> List.fold (fun state i -> walls::state) cave.Rocks
         { cave with Rocks = newRocks; FallingRock = newFallingRock; Count = cave.Count + 1; AtRest = false }
 
     let isCollision rock cave = 
@@ -129,6 +133,7 @@ module CaveState =
                 AtRest = false
                 JetIndex = 0
                 Count = 0
+                Height = 0
             }
 
         Seq.unfold (fun state -> 
@@ -140,11 +145,55 @@ module CaveState =
                 Some(nextRelease, nextRelease)
         ) initialCave
 
+
 let firstStar () =
     input
     |> CaveState.dropUntilCount 2022
     |> Seq.last
     |> CaveState.height
 
+
+let predictHeight windPattern (drops: int64) recurringFrom frequency = 
+
+    let shapeCount = shapeOrder |> List.length
+
+    let blockCount = frequency * shapeCount
+
+    let sample = 
+        windPattern
+        |> CaveState.dropUntilCount (2 * blockCount + recurringFrom)
+        |> Seq.toList
+        |> List.map (fun cave -> cave.Count, cave.Height)
+
+    let startBlock = sample |> List.find (fun (count, height) -> count = recurringFrom)
+    let startCount = startBlock |> fst
+    let endBlock = sample |> List.find (fun (count, height) -> count = recurringFrom + blockCount)
+        
+    let blockHeight = (snd endBlock - snd startBlock )
+    let blockCount = frequency * shapeCount
+
+    let blocks = (drops - int64 startCount) / int64 blockCount 
+    let rest = (drops - int64 startCount) % int64 blockCount
+
+    let restDrop = sample |> List.find (fun (count, height) -> count = (endBlock |> fst) + (rest |> int))
+
+    let restHeight = (restDrop |> snd) - (endBlock |> snd) |> int64
+
+    let skipHeight = startBlock |> snd |> int64
+    
+    skipHeight + int64 blockHeight * blocks + restHeight
+
+
+// using print methods in script (Day17.fsx) to print cave and manually check recurring pattern
+// use groupBy to find potential pattern markers
+
+// |###..##| (487) height: 5023 rocks: 3280
+// |###..##| (487) height: 2350 rocks: 1545
+
+// TODO: try to find recurring pattern programatically instead
+
+let skipToRock = 1545
+let frequency = (3280 - 1545) / shapeOrder.Length
+
 let secondStar () = 
-    0
+    predictHeight input 1000000000000L skipToRock frequency
