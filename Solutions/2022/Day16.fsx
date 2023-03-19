@@ -32,6 +32,11 @@ type RoomState =
     { Name: string; ValveState: Map<string, bool>; Time: int; TotalFlow: int; Parent: RoomState option }
     member this.Open = this.ValveState[this.Name]
     member this.Identity = { Name = this.Name; Time = this.Time; TotalFlow = this.TotalFlow }
+    member this.AllOpen (rooms: Map<string, Room>) =
+        this.ValveState 
+        |> Map.toSeq 
+        |> Seq.forall (fun (valve, isOpen) -> 
+            isOpen || rooms[valve].FlowRate = 0)
 
 let parse (lines: string list) = 
     lines
@@ -58,25 +63,28 @@ let initialValveState (rooms: Map<string, Room>) =
     |> Seq.map (fun room -> room.Name, false)
     |> Map.ofSeq
 
-let neighbours (rooms: Map<string, Room>) (room: RoomState) = 
-    let adjacentRooms = 
-        rooms[room.Name].TunnelTo
-        |> List.map (fun name -> { 
-            Name = name
-            ValveState = room.ValveState
-            Time = room.Time + 1
-            TotalFlow = room.TotalFlow
-            Parent = Some(room) })
-
-    if not room.Open && rooms[room.Name].FlowRate > 0 then
-        let nextTime = room.Time + 1
-        { room with 
-            ValveState = room.ValveState |> Map.add room.Name true
-            Time = nextTime
-            TotalFlow = room.TotalFlow + rooms[room.Name].FlowRate*(TTL-nextTime)
-        }::adjacentRooms
+let neighbours (rooms: Map<string, Room>) (room: RoomState) =
+    if room.AllOpen rooms then
+        [{ room with Time = room.Time + 1 }]
     else
-        adjacentRooms
+        let adjacentRooms = 
+            rooms[room.Name].TunnelTo
+            |> List.map (fun name -> { 
+                Name = name
+                ValveState = room.ValveState
+                Time = room.Time + 1
+                TotalFlow = room.TotalFlow
+                Parent = Some(room) })
+
+        if not room.Open && rooms[room.Name].FlowRate > 0 then
+            let nextTime = room.Time + 1
+            { room with 
+                ValveState = room.ValveState |> Map.add room.Name true
+                Time = nextTime
+                TotalFlow = room.TotalFlow + rooms[room.Name].FlowRate*(TTL-nextTime)
+            }::adjacentRooms
+        else
+            adjacentRooms
 
 
 let exampleRooms = example |> parse
@@ -142,6 +150,11 @@ type RoomState2 =
             true, { this with ValveState = this.ValveState |> Map.add name true }
         else 
             false, this
+    member this.AllOpen (rooms: Map<string, Room>) =
+        this.ValveState 
+        |> Map.toSeq 
+        |> Seq.forall (fun (valve, isOpen) -> 
+            isOpen || rooms[valve].FlowRate = 0)
 
     member this.Identity = { MyRoomName = this.MyRoom; ElephantsRoomName = this.ElephantsRoom; Time = this.Time; TotalFlow = this.TotalFlow }
 
@@ -156,45 +169,48 @@ let isSolution2 state = state.Time = TTL2
 
 let neighbours2 (rooms: Map<string, Room>) (roomState: RoomState2) =
     
-    // remove BA if AB
-    let adjacentRooms = 
-        [
-            for myRoom in rooms[roomState.MyRoom].TunnelTo do
-                for elephantsRoom in rooms[roomState.ElephantsRoom].TunnelTo do
-                    yield myRoom, elephantsRoom
-        ]
-        |> List.fold(fun acc (a, b) -> 
-            if acc |> Set.contains (b, a) then
-                acc
-            else
-                acc |> Set.add (a,b)
-        ) Set.empty
-        |> Set.map (fun (myRoom, elephantsRoom) -> 
-            { 
-                MyRoom = myRoom
-                ElephantsRoom = elephantsRoom
-                ValveState = roomState.ValveState
-                Time = roomState.Time + 1
-                TotalFlow = roomState.TotalFlow
-                Parent = Some(roomState) 
-            }
-        )
-        |> Set.toList
+    if roomState.AllOpen rooms then
+        [{ roomState with Time = roomState.Time + 1 }]
+    else 
+        // remove BA if AB
+        let adjacentRooms = 
+            [
+                for myRoom in rooms[roomState.MyRoom].TunnelTo do
+                    for elephantsRoom in rooms[roomState.ElephantsRoom].TunnelTo do
+                        yield myRoom, elephantsRoom
+            ]
+            |> List.fold(fun acc (a, b) -> 
+                if acc |> Set.contains (b, a) then
+                    acc
+                else
+                    acc |> Set.add (a,b)
+            ) Set.empty
+            |> Set.map (fun (myRoom, elephantsRoom) -> 
+                { 
+                    MyRoom = myRoom
+                    ElephantsRoom = elephantsRoom
+                    ValveState = roomState.ValveState
+                    Time = roomState.Time + 1
+                    TotalFlow = roomState.TotalFlow
+                    Parent = Some(roomState) 
+                }
+            )
+            |> Set.toList
 
-    let nextTime = roomState.Time + 1
+        let nextTime = roomState.Time + 1
 
-    let iOpened, myState = roomState.Open rooms roomState.MyRoom
-    let elephantOpened, elephantState = myState.Open rooms roomState.ElephantsRoom
+        let iOpened, myState = roomState.Open rooms roomState.MyRoom
+        let elephantOpened, elephantState = myState.Open rooms roomState.ElephantsRoom
+        // note to self, probably the flow calculation that is off:
+        let timeFactor = (TTL2 - nextTime)
+        let myAddedFlow = if iOpened then rooms[roomState.MyRoom].FlowRate else 0
+        let elephantsAddedFlow = if elephantOpened then rooms[roomState.ElephantsRoom].FlowRate else 0
+        let newFlowRate = roomState.TotalFlow + timeFactor*(myAddedFlow + elephantsAddedFlow)
 
-    let timeFactor = (TTL2 - nextTime)
-    let myAddedFlow = if iOpened then rooms[roomState.MyRoom].FlowRate else 0
-    let elephantsAddedFlow = if elephantOpened then rooms[roomState.ElephantsRoom].FlowRate else 0
-    let newFlowRate = roomState.TotalFlow + timeFactor*(myAddedFlow + elephantsAddedFlow)
-
-    if iOpened || elephantOpened then
-        { elephantState with Time = nextTime; TotalFlow = newFlowRate}::adjacentRooms
-    else
-        adjacentRooms
+        if iOpened || elephantOpened then
+            { elephantState with Time = nextTime; TotalFlow = newFlowRate}::adjacentRooms
+        else
+            adjacentRooms
 
 let roomIdentity2 (room: RoomState2) = room.Identity
 
@@ -222,6 +238,29 @@ let bfs2 isSolution nonVisitedNeighbours startState =
     
     bfsSearch()
 
+let openedUp roomState =
+    roomState.ValveState
+    |> Map.toSeq
+    |> Seq.filter(fun (valve, isOpen) -> 
+        match roomState.Parent with
+        | Some state -> isOpen && (not state.ValveState[valve])
+        | None -> isOpen)
+    |> Seq.toList
+
+let rec print rooms (roomState: RoomState2) =
+    let opened = roomState |> openedUp    
+    printfn "You're at: %s, Elephant at: %s Total Flow: %i Opened: [%A] (%b)" 
+        roomState.MyRoom 
+        roomState.ElephantsRoom 
+        roomState.TotalFlow 
+        opened 
+        (roomState.AllOpen rooms)
+
+
+    match roomState.Parent with
+    | Some state -> print rooms state
+    | None -> printfn "Back to where we started"
+
 let secondStar = 
     let rooms = example |> parse
     let valveState = rooms |> initialValveState
@@ -235,7 +274,9 @@ let secondStar =
     |> Seq.filter (fun state -> state.Time = TTL2)    
     |> Seq.sortBy (fun state -> state.TotalFlow)
     |> Seq.last
-    |> (fun state -> state.TotalFlow)
+    |> print rooms
+    //|> (fun state -> state.TotalFlow)
 
 secondStar
 
+let aMap = [("S", true); ("A", true)] |> Map.ofList
