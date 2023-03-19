@@ -1,7 +1,7 @@
 // --- Day 16: Proboscidea Volcanium ---
 
+open System.Collections.Generic
 open System.IO
-
 open System.Text.RegularExpressions
 
 System.Environment.CurrentDirectory <- __SOURCE_DIRECTORY__
@@ -22,6 +22,8 @@ let example =
         "Valve II has flow rate=0; tunnels lead to valves AA, JJ"
         "Valve JJ has flow rate=21; tunnel leads to valve II"
     ]
+
+let TTL = 30    
 
 type Room = { Name: string; FlowRate: int; TunnelTo: string list }
 type RoomIdentity = { Name: string; Time: int; TotalFlow: int }
@@ -56,9 +58,6 @@ let initialValveState (rooms: Map<string, Room>) =
     |> Seq.map (fun room -> room.Name, false)
     |> Map.ofSeq
 
-let exampleRooms = example |> parse
-let rooms = input |> parse
-
 let neighbours (rooms: Map<string, Room>) (room: RoomState) = 
     let adjacentRooms = 
         rooms[room.Name].TunnelTo
@@ -70,63 +69,173 @@ let neighbours (rooms: Map<string, Room>) (room: RoomState) =
             Parent = Some(room) })
 
     if not room.Open && rooms[room.Name].FlowRate > 0 then
+        let nextTime = room.Time + 1
         { room with 
             ValveState = room.ValveState |> Map.add room.Name true
-            Time = room.Time + 1
-            TotalFlow = room.TotalFlow + rooms[room.Name].FlowRate
+            Time = nextTime
+            TotalFlow = room.TotalFlow + rooms[room.Name].FlowRate*(TTL-nextTime)
         }::adjacentRooms
     else
         adjacentRooms
 
 
+let exampleRooms = example |> parse
 let exampleValveState = exampleRooms |> initialValveState
-
 let exampleStartRoom = { Name = "AA"; ValveState = exampleValveState; Time = 0; TotalFlow = 0; Parent = None }
 
-neighbours exampleRooms exampleStartRoom
-
 type nodeIdentity<'node,'identity> = 'node -> 'identity
-
-
-
 let roomIdentity (room: RoomState) = room.Identity
-let exampleStartVisited = exampleStartRoom |> roomIdentity |> Set.singleton
 
+let nonVisitedNeighbours (toNodeIdentity: nodeIdentity<RoomState, RoomIdentity>) rooms (visited:HashSet<RoomIdentity>) room =
+    neighbours rooms room
+    |> List.filter (fun neighbour -> visited.Add(neighbour |> toNodeIdentity))
 
+let isSolution state = state.Time = TTL
 
-type NodeSet<'node when 'node : comparison> = Set<'node>
-
-// from day 12:
-let shortestPath neighbours startExploring destination = 
-
-    let neighboursNotVisited (visited: NodeSet<'node>) nodeSet =
-        neighbours nodeSet
-        |> List.filter(visited.Contains >> not) 
-        |> Set
-
-    Seq.unfold(fun ((exploring, visited): NodeSet<'node>*NodeSet<'node>) -> 
-        if visited.IsSupersetOf destination then 
-            None 
+let bfs isSolution nonVisitedNeighbours startState =
+    let visited = new HashSet<RoomIdentity>()
+    let queue = new Queue<RoomState*int>()
+    let rec bfsSearch() =
+        if queue.Count = 0 then
+            failwith "no solution found"
         else
-            let newExploring = exploring |> Seq.map (neighboursNotVisited visited) |> Set.unionMany
-            let newVisited = visited + newExploring
-            let newState = newExploring, newVisited
-            Some(newState, newState)) (startExploring, startExploring)
-    |> Seq.length
-
-let n1 = neighbours exampleRooms exampleStartRoom
-let n2 = neighbours exampleRooms n1[0]
-let n3 = neighbours exampleRooms n2[0]
-
+            let (head, depth) = queue.Dequeue()
+            if isSolution head then 
+                queue
+            else 
+                for neighbour in nonVisitedNeighbours visited head do
+                    queue.Enqueue (neighbour, depth+1)
+                bfsSearch()
+    
+    queue.Enqueue (startState,0)
+    
+    bfsSearch()
 
 
 let firstStar =
-    0
+    
+    let rooms = input |> parse
+    let valveState = rooms |> initialValveState
+    let startRoom = { Name = "AA"; ValveState = valveState; Time = 0; TotalFlow = 0; Parent = None }
+
+
+    let queue = bfs isSolution (nonVisitedNeighbours roomIdentity rooms) startRoom
+    
+    queue 
+    |> Seq.toList
+    |> Seq.map fst
+    |> Seq.filter (fun state -> state.Time = TTL)    
+    |> Seq.sortBy (fun state -> state.TotalFlow)
+    |> Seq.last
+    |> (fun state -> state.TotalFlow)
 
 firstStar
 
+let TTL2 = 26
+
+type RoomIdentity2 = { MyRoomName: string; ElephantsRoomName: string; Time: int; TotalFlow: int }
+type RoomState2 = 
+    { MyRoom: string; ElephantsRoom: string; ValveState: Map<string, bool>; Time: int; TotalFlow: int; Parent: RoomState2 option }
+    member this.IsOpen name = this.ValveState[name]
+    member this.Open (rooms: Map<string, Room>) name =     
+        if not this.ValveState[name] && rooms[name].FlowRate > 0 then
+            true, { this with ValveState = this.ValveState |> Map.add name true }
+        else 
+            false, this
+
+    member this.Identity = { MyRoomName = this.MyRoom; ElephantsRoomName = this.ElephantsRoom; Time = this.Time; TotalFlow = this.TotalFlow }
+
+module RoomState2 = 
+    let openValve (rooms: Map<string, Room>) name state =
+        if not state.ValveState[name] && rooms[name].FlowRate > 0 then 
+            true, { state with ValveState = state.ValveState |> Map.add name true }
+        else
+            false, state
+
+let isSolution2 state = state.Time = TTL2
+
+let neighbours2 (rooms: Map<string, Room>) (roomState: RoomState2) =
+    
+    // remove BA if AB
+    let adjacentRooms = 
+        [
+            for myRoom in rooms[roomState.MyRoom].TunnelTo do
+                for elephantsRoom in rooms[roomState.ElephantsRoom].TunnelTo do
+                    yield myRoom, elephantsRoom
+        ]
+        |> List.fold(fun acc (a, b) -> 
+            if acc |> Set.contains (b, a) then
+                acc
+            else
+                acc |> Set.add (a,b)
+        ) Set.empty
+        |> Set.map (fun (myRoom, elephantsRoom) -> 
+            { 
+                MyRoom = myRoom
+                ElephantsRoom = elephantsRoom
+                ValveState = roomState.ValveState
+                Time = roomState.Time + 1
+                TotalFlow = roomState.TotalFlow
+                Parent = Some(roomState) 
+            }
+        )
+        |> Set.toList
+
+    let nextTime = roomState.Time + 1
+
+    let iOpened, myState = roomState.Open rooms roomState.MyRoom
+    let elephantOpened, elephantState = myState.Open rooms roomState.ElephantsRoom
+
+    let timeFactor = (TTL2 - nextTime)
+    let myAddedFlow = if iOpened then rooms[roomState.MyRoom].FlowRate else 0
+    let elephantsAddedFlow = if elephantOpened then rooms[roomState.ElephantsRoom].FlowRate else 0
+    let newFlowRate = roomState.TotalFlow + timeFactor*(myAddedFlow + elephantsAddedFlow)
+
+    if iOpened || elephantOpened then
+        { elephantState with Time = nextTime; TotalFlow = newFlowRate}::adjacentRooms
+    else
+        adjacentRooms
+
+let roomIdentity2 (room: RoomState2) = room.Identity
+
+let nonVisitedNeighbours2 (toNodeIdentity: nodeIdentity<RoomState2, RoomIdentity2>) rooms (visited:HashSet<RoomIdentity2>) room =
+    neighbours2 rooms room
+    |> List.filter (fun neighbour -> visited.Add(neighbour |> toNodeIdentity))
+
+
+let bfs2 isSolution nonVisitedNeighbours startState =
+    let visited = new HashSet<RoomIdentity2>()
+    let queue = new Queue<RoomState2*int>()
+    let rec bfsSearch() =
+        if queue.Count = 0 then
+            failwith "no solution found"
+        else
+            let (head, depth) = queue.Dequeue()
+            if isSolution head then 
+                queue
+            else 
+                for neighbour in nonVisitedNeighbours visited head do
+                    queue.Enqueue (neighbour, depth+1)
+                bfsSearch()
+    
+    queue.Enqueue (startState,0)
+    
+    bfsSearch()
+
 let secondStar = 
-    0
+    let rooms = example |> parse
+    let valveState = rooms |> initialValveState
+    let startRoom = { MyRoom = "AA"; ElephantsRoom = "AA"; ValveState = valveState; Time = 0; TotalFlow = 0; Parent = None }
+
+    let queue = bfs2 isSolution2 (nonVisitedNeighbours2 roomIdentity2 rooms) startRoom
+    
+    queue 
+    |> Seq.toList
+    |> Seq.map fst
+    |> Seq.filter (fun state -> state.Time = TTL2)    
+    |> Seq.sortBy (fun state -> state.TotalFlow)
+    |> Seq.last
+    |> (fun state -> state.TotalFlow)
 
 secondStar
 

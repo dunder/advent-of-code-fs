@@ -2,7 +2,8 @@
   "profiles": {
     "Solutions": {
       "commandName": "Project",
-      "commandLineArgs": "run -e 2022 -d 4 -fs"
+      "commandLineArgs": "run -e 2022 -d 16 -f",
+      "workingDirectory": "C:\\Users\\matjan\\source\\repos\\advent-of-code-fs\\Solutions"
     }
   }
 }
