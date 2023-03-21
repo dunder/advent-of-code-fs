@@ -127,15 +127,13 @@ let firstStar () =
     |> Seq.last
     |> (fun state -> state.TotalFlow)
 
-
-
 let TTL2 = 26
 
 type RoomIdentity2 = { MyRoomName: string; ElephantsRoomName: string; Time: int; TotalFlow: int }
 type RoomState2 = 
     { MyRoom: string; ElephantsRoom: string; ValveState: Map<string, bool>; Time: int; TotalFlow: int; Parent: RoomState2 option }
     member this.IsOpen name = this.ValveState[name]
-    member this.Open (rooms: Map<string, Room>) name =     
+    member this.Open (rooms: Map<string, Room>) name =
         if not this.ValveState[name] && rooms[name].FlowRate > 0 then
             true, { this with ValveState = this.ValveState |> Map.add name true }
         else 

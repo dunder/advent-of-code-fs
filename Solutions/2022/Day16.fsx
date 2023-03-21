@@ -119,6 +119,27 @@ let bfs isSolution nonVisitedNeighbours startState =
     
     bfsSearch()
 
+let openedUp roomState =
+    roomState.ValveState
+    |> Map.toSeq
+    |> Seq.filter(fun (valve, isOpen) -> 
+        match roomState.Parent with
+        | Some state -> isOpen && (not state.ValveState[valve])
+        | None -> isOpen)
+    |> Seq.toList
+
+let rec print rooms (roomState: RoomState) =
+    let time = TTL - roomState.Time + 1
+    let opened = roomState |> openedUp
+    printfn "%2i: %s Total Flow: %i Opened: %A All opened: %b" 
+        time
+        roomState.Name 
+        roomState.TotalFlow
+        opened
+        (roomState.AllOpen rooms)
+    match roomState.Parent with
+    | Some state -> print rooms state
+    | None -> printfn "Back to where we started"
 
 let firstStar =
     
@@ -135,7 +156,8 @@ let firstStar =
     |> Seq.filter (fun state -> state.Time = TTL)    
     |> Seq.sortBy (fun state -> state.TotalFlow)
     |> Seq.last
-    |> (fun state -> state.TotalFlow)
+    |> print rooms
+    //|> (fun state -> state.TotalFlow)
 
 firstStar
 
@@ -170,54 +192,92 @@ let isSolution2 state = state.Time = TTL2
 let neighbours2 (rooms: Map<string, Room>) (roomState: RoomState2) =
     
     if roomState.AllOpen rooms then
-        [{ roomState with Time = roomState.Time + 1 }]
+        [{ roomState with Time = roomState.Time + 1; Parent = Some(roomState) }]
     else 
-        // remove BA if AB
-        let adjacentRooms = 
-            [
-                for myRoom in rooms[roomState.MyRoom].TunnelTo do
-                    for elephantsRoom in rooms[roomState.ElephantsRoom].TunnelTo do
-                        yield myRoom, elephantsRoom
-            ]
-            |> List.fold(fun acc (a, b) -> 
+        let removeEquivalent candidates =
+            candidates
+             |> List.fold(fun acc (a, b) -> 
                 if acc |> Set.contains (b, a) then
                     acc
                 else
                     acc |> Set.add (a,b)
             ) Set.empty
-            |> Set.map (fun (myRoom, elephantsRoom) -> 
-                { 
-                    MyRoom = myRoom
-                    ElephantsRoom = elephantsRoom
-                    ValveState = roomState.ValveState
-                    Time = roomState.Time + 1
-                    TotalFlow = roomState.TotalFlow
-                    Parent = Some(roomState) 
-                }
-            )
             |> Set.toList
 
+        let possibleAdjacentRooms =
+            [
+                for myRoom in rooms[roomState.MyRoom].TunnelTo do
+                    for elephantsRoom in rooms[roomState.ElephantsRoom].TunnelTo do
+                        yield myRoom, elephantsRoom
+            ]
+        
         let nextTime = roomState.Time + 1
 
-        let iOpened, myState = roomState.Open rooms roomState.MyRoom
-        let elephantOpened, elephantState = myState.Open rooms roomState.ElephantsRoom
-        // note to self, probably the flow calculation that is off:
-        let timeFactor = (TTL2 - nextTime)
-        let myAddedFlow = if iOpened then rooms[roomState.MyRoom].FlowRate else 0
-        let elephantsAddedFlow = if elephantOpened then rooms[roomState.ElephantsRoom].FlowRate else 0
-        let newFlowRate = roomState.TotalFlow + timeFactor*(myAddedFlow + elephantsAddedFlow)
+        let adjacentRooms =
+            if roomState.MyRoom = roomState.ElephantsRoom then
+                possibleAdjacentRooms |> removeEquivalent 
+            else
+                possibleAdjacentRooms
+            |> List.map (fun (myRoom, elephantsRoom) -> 
+                { 
+                    roomState with
+                        MyRoom = myRoom
+                        ElephantsRoom = elephantsRoom
+                        Time = nextTime
+                        Parent = Some(roomState)
+                }
+            )        
 
-        if iOpened || elephantOpened then
-            { elephantState with Time = nextTime; TotalFlow = newFlowRate}::adjacentRooms
-        else
-            adjacentRooms
+        let onlyMyOpened, onlyMyOpenedState = roomState.Open rooms roomState.MyRoom
+        let onlyElephantOpened, onlyElephantOpenedState = roomState.Open rooms roomState.ElephantsRoom
+        let bothOpened, bothOpenedState = onlyMyOpenedState.Open rooms roomState.ElephantsRoom
 
+        let timeFactor = TTL2 - nextTime
+        let myFlowRate = rooms[roomState.MyRoom].FlowRate
+        let elephantsFlowRate = rooms[roomState.ElephantsRoom].FlowRate
+
+        let onlyMineOpenedStates = 
+            if onlyMyOpened then
+                rooms[roomState.ElephantsRoom].TunnelTo
+                |> List.map (fun r -> { 
+                    onlyMyOpenedState with 
+                        ElephantsRoom = r
+                        Time = nextTime
+                        TotalFlow = roomState.TotalFlow + myFlowRate*timeFactor
+                        Parent = Some(roomState)})
+            else 
+                []
+
+        let onlyElephantsOpenedStates =
+            if onlyElephantOpened then
+                rooms[roomState.MyRoom].TunnelTo
+                |> List.map (fun r -> { 
+                    onlyElephantOpenedState with 
+                        MyRoom = r
+                        Time = nextTime
+                        TotalFlow = roomState.TotalFlow + elephantsFlowRate*timeFactor
+                        Parent = Some(roomState) })
+            else 
+                []
+
+        let bothOpenedStates = 
+            if onlyMyOpened && bothOpened then
+                [{ 
+                    bothOpenedState with 
+                        Time = roomState.Time + 1
+                        TotalFlow = roomState.TotalFlow + (myFlowRate + elephantsFlowRate)*timeFactor
+                        Parent = Some(roomState)
+                }]
+            else 
+                []
+
+        onlyMineOpenedStates @ onlyElephantsOpenedStates @ bothOpenedStates @ adjacentRooms
+    
 let roomIdentity2 (room: RoomState2) = room.Identity
 
 let nonVisitedNeighbours2 (toNodeIdentity: nodeIdentity<RoomState2, RoomIdentity2>) rooms (visited:HashSet<RoomIdentity2>) room =
     neighbours2 rooms room
     |> List.filter (fun neighbour -> visited.Add(neighbour |> toNodeIdentity))
-
 
 let bfs2 isSolution nonVisitedNeighbours startState =
     let visited = new HashSet<RoomIdentity2>()
@@ -238,7 +298,7 @@ let bfs2 isSolution nonVisitedNeighbours startState =
     
     bfsSearch()
 
-let openedUp roomState =
+let openedUp2 roomState =
     roomState.ValveState
     |> Map.toSeq
     |> Seq.filter(fun (valve, isOpen) -> 
@@ -247,9 +307,12 @@ let openedUp roomState =
         | None -> isOpen)
     |> Seq.toList
 
-let rec print rooms (roomState: RoomState2) =
-    let opened = roomState |> openedUp    
-    printfn "You're at: %s, Elephant at: %s Total Flow: %i Opened: [%A] (%b)" 
+let rec print2 rooms (roomState: RoomState2) =
+    let opened = roomState |> openedUp2
+    let timeLeft = TTL2 - roomState.Time
+    printfn "%2i (%2i): You're at: %s, Elephant at: %s Total Flow: %i Opened: %A (%b)" 
+        roomState.Time
+        timeLeft
         roomState.MyRoom 
         roomState.ElephantsRoom 
         roomState.TotalFlow 
@@ -258,11 +321,11 @@ let rec print rooms (roomState: RoomState2) =
 
 
     match roomState.Parent with
-    | Some state -> print rooms state
+    | Some state -> print2 rooms state
     | None -> printfn "Back to where we started"
 
 let secondStar = 
-    let rooms = example |> parse
+    let rooms = input |> parse
     let valveState = rooms |> initialValveState
     let startRoom = { MyRoom = "AA"; ElephantsRoom = "AA"; ValveState = valveState; Time = 0; TotalFlow = 0; Parent = None }
 
@@ -274,9 +337,11 @@ let secondStar =
     |> Seq.filter (fun state -> state.Time = TTL2)    
     |> Seq.sortBy (fun state -> state.TotalFlow)
     |> Seq.last
-    |> print rooms
-    //|> (fun state -> state.TotalFlow)
+    // |> print2 rooms
+    |> (fun state -> state.TotalFlow)
 
 secondStar
 
-let aMap = [("S", true); ("A", true)] |> Map.ofList
+20*(TTL2+1-3)+21*(TTL2+1-4)+(13+22)*(TTL2+1-8)+2*(TTL2+1-10)+3*(TTL2+1-12)=1707
+
+20*24+23*(21+20)
