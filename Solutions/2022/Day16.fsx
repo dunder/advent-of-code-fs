@@ -23,7 +23,7 @@ let example =
         "Valve JJ has flow rate=21; tunnel leads to valve II"
     ]
 
-let TTL = 30    
+// let TTL = 30
 
 type Room = { Name: string; FlowRate: int; TunnelTo: string list }
 type RoomIdentity = { Name: string; Time: int; TotalFlow: int }
@@ -63,7 +63,7 @@ let initialValveState (rooms: Map<string, Room>) =
     |> Seq.map (fun room -> room.Name, false)
     |> Map.ofSeq
 
-let neighbours (rooms: Map<string, Room>) (room: RoomState) =
+let neighbours ttl (rooms: Map<string, Room>) (room: RoomState) =
     if room.AllOpen rooms then
         [{ room with Time = room.Time + 1 }]
     else
@@ -81,7 +81,7 @@ let neighbours (rooms: Map<string, Room>) (room: RoomState) =
             { room with 
                 ValveState = room.ValveState |> Map.add room.Name true
                 Time = nextTime
-                TotalFlow = room.TotalFlow + rooms[room.Name].FlowRate*(TTL-nextTime)
+                TotalFlow = room.TotalFlow + rooms[room.Name].FlowRate*(ttl-nextTime)
             }::adjacentRooms
         else
             adjacentRooms
@@ -94,11 +94,11 @@ let exampleStartRoom = { Name = "AA"; ValveState = exampleValveState; Time = 0; 
 type nodeIdentity<'node,'identity> = 'node -> 'identity
 let roomIdentity (room: RoomState) = room.Identity
 
-let nonVisitedNeighbours (toNodeIdentity: nodeIdentity<RoomState, RoomIdentity>) rooms (visited:HashSet<RoomIdentity>) room =
-    neighbours rooms room
+let nonVisitedNeighbours ttl (toNodeIdentity: nodeIdentity<RoomState, RoomIdentity>) rooms (visited:HashSet<RoomIdentity>) room =
+    neighbours ttl rooms room
     |> List.filter (fun neighbour -> visited.Add(neighbour |> toNodeIdentity))
 
-let isSolution state = state.Time = TTL
+let isSolution ttl state = state.Time = ttl
 
 let bfs isSolution nonVisitedNeighbours startState =
     let visited = new HashSet<RoomIdentity>()
@@ -128,8 +128,8 @@ let openedUp roomState =
         | None -> isOpen)
     |> Seq.toList
 
-let rec print rooms (roomState: RoomState) =
-    let time = TTL - roomState.Time + 1
+let rec print ttl rooms (roomState: RoomState) =
+    let time = ttl - roomState.Time + 1
     let opened = roomState |> openedUp
     printfn "%2i: %s Total Flow: %i Opened: %A All opened: %b" 
         time
@@ -138,28 +138,44 @@ let rec print rooms (roomState: RoomState) =
         opened
         (roomState.AllOpen rooms)
     match roomState.Parent with
-    | Some state -> print rooms state
+    | Some state -> print ttl rooms state
     | None -> printfn "Back to where we started"
 
-let firstStar =
-    
-    let rooms = input |> parse
-    let valveState = rooms |> initialValveState
+let mostPressure ttl valveState = 
+    let rooms = input |> parse    
     let startRoom = { Name = "AA"; ValveState = valveState; Time = 0; TotalFlow = 0; Parent = None }
 
-
-    let queue = bfs isSolution (nonVisitedNeighbours roomIdentity rooms) startRoom
+    let queue = bfs (isSolution ttl) (nonVisitedNeighbours ttl roomIdentity rooms) startRoom
     
     queue 
     |> Seq.toList
     |> Seq.map fst
-    |> Seq.filter (fun state -> state.Time = TTL)    
+    |> Seq.filter (fun state -> state.Time = ttl)    
     |> Seq.sortBy (fun state -> state.TotalFlow)
     |> Seq.last
-    |> print rooms
-    //|> (fun state -> state.TotalFlow)
+
+let firstStar =
+
+    let rooms = input |> parse
+    let valveState = rooms |> initialValveState
+
+    let endState = mostPressure 30 valveState
+
+    endState.TotalFlow
 
 firstStar
+
+let firstStarAgain =
+    
+    let ttl = 26
+    let rooms = input |> parse
+    let valveState = rooms |> initialValveState
+    let firstRun = mostPressure ttl valveState 
+    let secondRun = mostPressure ttl firstRun.ValveState
+
+    firstRun.TotalFlow + secondRun.TotalFlow
+
+firstStarAgain 
 
 let TTL2 = 26
 
@@ -239,7 +255,7 @@ let neighbours2 (rooms: Map<string, Room>) (roomState: RoomState2) =
         let onlyMineOpenedStates = 
             if onlyMyOpened then
                 rooms[roomState.ElephantsRoom].TunnelTo
-                |> List.map (fun r -> { 
+                |> List.map (fun r-> { 
                     onlyMyOpenedState with 
                         ElephantsRoom = r
                         Time = nextTime
@@ -324,6 +340,8 @@ let rec print2 rooms (roomState: RoomState2) =
     | Some state -> print2 rooms state
     | None -> printfn "Back to where we started"
 
+// this solution takes approx 7 minutes
+
 let secondStar = 
     let rooms = input |> parse
     let valveState = rooms |> initialValveState
@@ -337,11 +355,6 @@ let secondStar =
     |> Seq.filter (fun state -> state.Time = TTL2)    
     |> Seq.sortBy (fun state -> state.TotalFlow)
     |> Seq.last
-    // |> print2 rooms
     |> (fun state -> state.TotalFlow)
 
 secondStar
-
-20*(TTL2+1-3)+21*(TTL2+1-4)+(13+22)*(TTL2+1-8)+2*(TTL2+1-10)+3*(TTL2+1-12)=1707
-
-20*24+23*(21+20)
