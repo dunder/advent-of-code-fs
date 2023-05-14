@@ -78,12 +78,6 @@ module ValleyMap =
         let ws = map.Walls
         bs @ ws |> Set.ofList
 
-    let ofAllTimes map =
-        [0..map.Height*map.Width]
-        |> List.fold (fun state i -> 
-            state |> Map.add i (map |> ofTime i |> toOccupied)
-        ) Map.empty
-
 let memoize fn =
     let cache = new Dictionary<_,_>()
     (fun x ->
