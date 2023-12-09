@@ -116,6 +116,7 @@ let print pods =
                 | _ -> printf "X"
         printfn ""
 
+print podsExample
 // type SolverState<'vertice when 'vertice: comparison> = { CurrentVertice: 'vertice; Vertices: Set<'vertice>; Dist: Map<'vertice, int>; Prev: Map<'vertice, option<'vertice>> }
 
 // module SolverState =

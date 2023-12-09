@@ -112,6 +112,7 @@
     <Compile Include="2016\Day04.fs" />
     <Compile Include="2016\Day05.fs" />
     <Compile Include="2016\Day06.fs" />
+    <Compile Include="2016\Day07.fs" />
     <Content Include="2020\Input\Day01.txt">
       <CopyToOutputDirectory>Always</CopyToOutputDirectory>
     </Content>
@@ -326,6 +327,7 @@
     <Compile Include="2022\Day23.fs" />
     <Compile Include="2022\Day24.fs" />
     <Compile Include="2022\Day25.fs" />
+    <Compile Include="2023\Day01.fs" />
     <Compile Include="Program.fs" />
   </ItemGroup>
   <ItemGroup>
