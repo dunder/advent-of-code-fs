@@ -44,16 +44,6 @@ let (|Number|_|) (number: string) index =
         | Some n -> Some (toDigit n)
         | None -> None
 
-
-let example2 = [
-    "two1nine"
-    "eightwothree"
-    "abcone2threexyz"
-    "xtwone3four"
-    "4nineeightseven2"
-    "zoneight234"
-    "7pqrstsixteen"
-]
 let tryParseNumber text index =
     match index with
     | Number text n -> Some(n)
