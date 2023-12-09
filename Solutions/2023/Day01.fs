@@ -50,8 +50,8 @@ let tryParseNumber text index =
     | _ -> None
 
 let findNumber (line: string) indeces = indeces |> Seq.map (tryParseNumber line) |> Seq.pick(id)
-let findLeft (line: string) = seq {0..line.Length-1} |> (findNumber line)
-let findRight (line: string) = seq {line.Length-1..-1..0} |> (findNumber line)
+let findLeft (line: string) = seq {0..line.Length-1} |> findNumber line
+let findRight (line: string) = seq {line.Length-1..-1..0} |> findNumber line
 let sumOfTextedCalibrationValues input =
     input
     |> List.map(fun line -> findLeft line + findRight line)
