@@ -44,8 +44,7 @@ let parse (input: list<string>) =
         let gameId = parts[0]["Game ".Length..] |> int
         let sets = 
             parts[1].Split("; ") 
-            |> Array.map parseSet 
-            |> Array.map aggregateSet
+            |> Array.map (parseSet >> aggregateSet)
             |> List.ofArray
 
         { Id = gameId; Sets = sets}
