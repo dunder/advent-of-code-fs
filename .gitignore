@@ -263,3 +263,7 @@ __pycache__/
 # Ionide for F# in Visual Studio Code
 .ionide/
 .fake
+
+# Local advent of code input files
+
+Solutions/*/Input/Day*.txt
